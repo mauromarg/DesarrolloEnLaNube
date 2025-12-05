@@ -1,12 +1,80 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Desarrollo en la Nube</title>
+    <title>Lista de Productos</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        h1 { color: #333; }
+        #products-list ul { list-style: none; padding: 0; }
+        #products-list li { background: #f4f4f4; margin-bottom: 10px; padding: 15px; border-radius: 5px; }
+        #products-list strong { color: #0056b3; }
+        #products-list em { color: #555; }
+    </style>
 </head>
 <body>
-    <h1>Hello World!!!</h1>
-    <h2>I'm back.....</h2>
+
+    <h1>Nuestros Productos</h1>
+    <p>Los productos se cargan dinámicamente desde Firebase Realtime Database.</p>
+    <div id="products-list">
+        <p>Cargando productos...</p>
+    </div>
+
+    <!-- SDK de Firebase (versión compatibilidad para facilidad de uso) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+    <script>
+        // Tu configuración de Firebase para la app web
+        const firebaseConfig = {
+          apiKey: "AIzaSyBJkV7des2EtFX6EHJLUyzHJIvG7P86zGE",
+          authDomain: "desarrolloenlanube-34667-816f5.firebaseapp.com",
+          databaseURL: "https://desarrolloenlanube-34667-816f5-default-rtdb.firebaseio.com",
+          projectId: "desarrolloenlanube-34667-816f5",
+          storageBucket: "desarrolloenlanube-34667-816f5.appspot.com",
+          messagingSenderId: "438315579198",
+          appId: "1:438315579198:web:51bcb77a9789c1981ade6f"
+        };
+
+        // Inicializa Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Obtiene una referencia al servicio de la base de datos
+        const database = firebase.database();
+        const productsRef = database.ref('products');
+
+        // Escucha los cambios en el nodo de productos
+        productsRef.on('value', (snapshot) => {
+            const products = snapshot.val();
+            const productsListDiv = document.getElementById('products-list');
+            
+            // Limpia la lista anterior
+            productsListDiv.innerHTML = ''; 
+
+            if (products) {
+                const ul = document.createElement('ul');
+                // Itera sobre cada producto y crea un elemento de lista
+                for (const productId in products) {
+                    const product = products[productId];
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <strong>${product.name}</strong> - $${product.price.toFixed(2)} <br>
+                        <em>${product.description}</em> <br>
+                        <span>Stock: ${product.stock}</span>
+                    `;
+                    ul.appendChild(li);
+                }
+                productsListDiv.appendChild(ul);
+            } else {
+                productsListDiv.innerHTML = '<p>No hay productos para mostrar.</p>';
+            }
+        }, (errorObject) => {
+            console.error('La lectura de datos falló: ', errorObject);
+            const productsListDiv = document.getElementById('products-list');
+            productsListDiv.innerHTML = '<p>Error al cargar los productos. Revisa la consola para más detalles.</p>';
+        });
+    </script>
+
 </body>
 </html>
