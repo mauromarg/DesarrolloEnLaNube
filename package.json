@@ -2,14 +2,17 @@
   "name": "desarrolloenlanube",
   "version": "1.0.0",
   "description": "**AppCheckIn** es una aplicación diseñada para mejorar y agilizar la experiencia de los visitantes dentro de las instalaciones de un hotel. Su objetivo principal es permitir que cada huésped pueda gestionar su estancia de forma fácil, rápida y sin necesidad de pasar por recepción.",
-  "main": "index.js",
+  "main": "server/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server/index.js",
+    "db:init": "node server/initializeDatabase.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "firebase-admin": "^13.6.0"
+    "firebase-admin": "^13.6.0",
+    "express": "^4.19.2"
   }
 }
