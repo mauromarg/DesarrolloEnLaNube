@@ -1,128 +1,128 @@
-<!DOCTYPE html>
+'''<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tienda de Productos</title>
+    <title>AppCheckIn - Gestión de Hotel</title>
     <style>
         body { font-family: sans-serif; margin: 2em; background-color: #f9f9f9; color: #333; }
         h1, h2 { color: #0056b3; }
-        #products-list ul { list-style: none; padding: 0; display: flex; flex-wrap: wrap; }
-        #products-list li { background: #fff; margin: 10px; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: 200px; }
-        #products-list img { max-width: 100%; border-radius: 5px; margin-bottom: 10px; }
-        #products-list strong { color: #0056b3; font-size: 1.1em; }
-        #product-form { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 20px; }
-        #product-form input, #product-form textarea { width: calc(100% - 22px); padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        #product-form button { background-color: #0056b3; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; }
-        #product-form button:hover { background-color: #004494; }
+        .container { display: flex; flex-wrap: wrap; gap: 20px; }
+        .section { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; min-width: 300px;}
+        .section ul { list-style: none; padding: 0; }
+        .section li { background: #f0f0f0; margin-bottom: 10px; padding: 10px; border-radius: 5px; }
+        .form-section { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 20px; }
+        .form-section input, .form-section select, .form-section textarea { width: calc(100% - 22px); padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .form-section button { background-color: #0056b3; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; }
+        .form-section button:hover { background-color: #004494; }
     </style>
 </head>
 <body>
 
-    <div id="homePage">
-        <h1>Nuestros Productos</h1>
-        <div id="products-list">
-            <p>Cargando productos...</p>
+    <h1>Bienvenido a AppCheckIn</h1>
+
+    <div class="container">
+        <div id="rooms-section" class="section">
+            <h2>Habitaciones</h2>
+            <ul id="rooms-list"><p>Cargando habitaciones...</p></ul>
+        </div>
+
+        <div id="reservations-section" class="section">
+            <h2>Reservas</h2>
+            <ul id="reservations-list"><p>Cargando reservas...</p></ul>
+        </div>
+
+        <div id="clients-section" class="section">
+            <h2>Clientes</h2>
+            <ul id="clients-list"><p>Cargando clientes...</p></ul>
         </div>
     </div>
 
-    <div id="form-section">
-        <h2>Gestionar Productos</h2>
-        <form id="product-form">
-            <input type="text" id="productName" placeholder="Nombre del Producto" required>
-            <input type="number" id="productPrice" placeholder="Precio" required>
-            <textarea id="productDescription" placeholder="Descripción"></textarea>
-            <input type="number" id="productStock" placeholder="Stock" required>
-            <input type="text" id="productImage" placeholder="URL de la Imagen">
-            <button type="button" onclick="addProduct()">Agregar Producto</button>
-            <input type="text" id="productIdToUpdate" placeholder="ID del Producto a Modificar">
-            <button type="button" onclick="updateProduct()">Modificar Producto</button>
+    <div id="reservation-form-section" class="form-section">
+        <h2>Crear Nueva Reserva</h2>
+        <form id="reservation-form">
+            <input type="text" id="client-name" placeholder="Nombre del Cliente" required>
+            <select id="room-number" required>
+                <option value="">Seleccione una habitación</option>
+            </select>
+            <input type="date" id="start-date" required>
+            <input type="date" id="end-date" required>
+            <button type="submit">Crear Reserva</button>
         </form>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-
     <script>
-        const firebaseConfig = {
-          apiKey: "AIzaSyBJkV7des2EtFX6EHJLUyzHJIvG7P86zGE",
-          authDomain: "desarrolloenlanube-34667-816f5.firebaseapp.com",
-          databaseURL: "https://desarrolloenlanube-34667-816f5-default-rtdb.firebaseio.com",
-          projectId: "desarrolloenlanube-34667-816f5",
-          storageBucket: "desarrolloenlanube-34667-816f5.appspot.com",
-          messagingSenderId: "438315579198",
-          appId: "1:438315579198:web:51bcb77a9789c1981ade6f"
-        };
+        document.addEventListener('DOMContentLoaded', () => {
+            const roomsList = document.getElementById('rooms-list');
+            const reservationsList = document.getElementById('reservations-list');
+            const clientsList = document.getElementById('clients-list');
+            const roomSelect = document.getElementById('room-number');
 
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        const productsRef = database.ref('products');
-
-        productsRef.on('value', (snapshot) => {
-            const products = snapshot.val();
-            const productsListDiv = document.getElementById('products-list');
-            productsListDiv.innerHTML = ''; 
-
-            if (products) {
-                const ul = document.createElement('ul');
-                for (const productId in products) {
-                    const product = products[productId];
+            // Cargar habitaciones, reservas y clientes al iniciar
+            fetch('/api/habitaciones').then(res => res.json()).then(data => {
+                roomsList.innerHTML = '';
+                roomSelect.innerHTML = '<option value="">Seleccione una habitación</option>';
+                data.forEach(room => {
                     const li = document.createElement('li');
-                    li.innerHTML = `
-                        <img src="${product.imageUrl || 'https://via.placeholder.com/150'}" alt="${product.name}">
-                        <strong>${product.name}</strong><br>
-                        $${product.price.toFixed(2)}
-                    `;
-                    ul.appendChild(li);
-                }
-                productsListDiv.appendChild(ul);
-            } else {
-                productsListDiv.innerHTML = '<p>No hay productos para mostrar.</p>';
-            }
-        });
-
-        function addProduct() {
-            const name = document.getElementById('productName').value;
-            const price = parseFloat(document.getElementById('productPrice').value);
-            const description = document.getElementById('productDescription').value;
-            const stock = parseInt(document.getElementById('productStock').value);
-            const imageUrl = document.getElementById('productImage').value;
-
-            if (name && !isNaN(price) && !isNaN(stock)) {
-                productsRef.push({
-                    name,
-                    price,
-                    description,
-                    stock,
-                    imageUrl
+                    li.textContent = `Habitación ${room.numero} (${room.tipo}) - $${room.precio} - ${room.disponible ? 'Disponible' : 'Ocupada'}`;
+                    roomsList.appendChild(li);
+                    if (room.disponible) {
+                        const option = document.createElement('option');
+                        option.value = room.id;
+                        option.textContent = `Habitación ${room.numero}`;
+                        roomSelect.appendChild(option);
+                    }
                 });
-                document.getElementById('product-form').reset();
-            }
-        }
+            });
 
-        function updateProduct() {
-            const productId = document.getElementById('productIdToUpdate').value;
-            const name = document.getElementById('productName').value;
-            const price = parseFloat(document.getElementById('productPrice').value);
-            const description = document.getElementById('productDescription').value;
-            const stock = parseInt(document.getElementById('productStock').value);
-            const imageUrl = document.getElementById('productImage').value;
+            fetch('/api/reservas').then(res => res.json()).then(data => {
+                reservationsList.innerHTML = '';
+                data.forEach(reserva => {
+                    const li = document.createElement('li');
+                    li.textContent = `Reserva para ${reserva.clienteId} en habitación ${reserva.habitacionId}`;
+                    reservationsList.appendChild(li);
+                });
+            });
 
-            if (productId) {
-                const updates = {};
-                if (name) updates['name'] = name;
-                if (!isNaN(price)) updates['price'] = price;
-                if (description) updates['description'] = description;
-                if (!isNaN(stock)) updates['stock'] = stock;
-                if (imageUrl) updates['imageUrl'] = imageUrl;
+            fetch('/api/clientes').then(res => res.json()).then(data => {
+                clientsList.innerHTML = '';
+                data.forEach(client => {
+                    const li = document.createElement('li');
+                    li.textContent = `${client.nombre} (${client.email})`;
+                    clientsList.appendChild(li);
+                });
+            });
 
-                database.ref('products/' + productId).update(updates);
-                document.getElementById('product-form').reset();
-            } else {
-                alert('Por favor, introduce el ID del producto a modificar.');
-            }
-        }
+            // Manejar el envío del formulario de reserva
+            document.getElementById('reservation-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const clientName = document.getElementById('client-name').value;
+                const roomNumber = document.getElementById('room-number').value;
+                const startDate = document.getElementById('start-date').value;
+                const endDate = document.getElementById('end-date').value;
+
+                // Lógica para obtener o crear el cliente
+                let clientId = 'cliente-temporal'; // Placeholder
+
+                const response = await fetch('/api/reservas', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        clienteId: clientId,
+                        habitacionId: roomNumber,
+                        fechaEntrada: startDate,
+                        fechaSalida: endDate
+                    })
+                });
+                if (response.ok) {
+                    alert('Reserva creada con éxito!');
+                    location.reload();
+                } else {
+                    alert('Error al crear la reserva.');
+                }
+            });
+        });
     </script>
 
 </body>
-</html>
+</html>'''

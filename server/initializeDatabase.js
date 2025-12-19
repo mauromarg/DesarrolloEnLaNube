@@ -1,180 +1,154 @@
-// initializeDatabase.js
+const { getFirestore } = require("firebase-admin/firestore");
 
-
-// Importa el SDK de Firebase Admin
-
-const admin = require('firebase-admin');
-
-
-// --- 1. Configura la ruta a tu archivo de credenciales ---
-
-// Asegúrate de que 'serviceAccountKey.json' esté en la misma carpeta que este script
-
-const serviceAccount = require('../serviceAccountKey.json');
-
-
-// --- 2. Inicializa el Admin SDK ---
-
-// Aquí le dices al SDK a qué proyecto de Firebase debe conectarse.
-
-admin.initializeApp({
-
-  credential: admin.credential.cert(serviceAccount),
-
-  // Asegúrate de que esta sea la URL CORRECTA de tu Realtime Database.
-
-  // Tu Realtime Database es: https://desarrolloenlanube-34667-816f5-default-rtdb.firebaseio.com
-
-  databaseURL: 'https://desarrolloenlanube-34667-816f5-default-rtdb.firebaseio.com'
-
-});
-
-
-// Obtiene una referencia a tu Realtime Database
-
-const db = admin.database();
-
-
-// --- 3. Define la estructura de datos inicial ---
-
-// Este es el "árbol" de datos que quieres crear en tu Realtime Database.
-
-// No hay "tablas" en el sentido relacional, sino "nodos" y "rutas".
-
-const initialData = {
-
-  // Un nodo para usuarios
-
-  users: {
-
-    // Un usuario de ejemplo con un ID específico
-
-    'user_id_1': {
-
-      name: 'Alice Smith',
-
-      email: 'alice@example.com',
-
-      role: 'admin',
-
-      createdAt: new Date().toISOString() // Almacena la fecha de creación
-
-    },
-
-    'user_id_2': {
-
-      name: 'Bob Johnson',
-
-      email: 'bob@example.com',
-
-      role: 'viewer',
-
-      createdAt: new Date().toISOString()
-
+// Función para añadir documentos a una colección solo si está vacía
+async function seedCollection(collection, data, idField) {
+  const snapshot = await collection.limit(1).get();
+  if (snapshot.empty) {
+    console.log(`Creando colección de ${collection.id}...`);
+    const batch = collection.firestore.batch();
+    for (const item of data) {
+      const docRef = collection.doc(item[idField]);
+      batch.set(docRef, item);
     }
-
-  },
-
-  // Un nodo para productos
-
-  products: {
-
-    'product_sku_abc': {
-
-      name: 'Laptop Pro',
-
-      price: 1200.00,
-
-      stock: 50,
-
-      description: 'Potente laptop para profesionales',
-
-      category: 'Electronics'
-
-    },
-
-    'product_sku_xyz': {
-
-      name: 'Monitor Ultra',
-
-      price: 300.00,
-
-      stock: 120,
-
-      description: 'Monitor de alta resolución',
-
-      category: 'Electronics'
-
-    }
-
-  },
-
-  // Un nodo para configuraciones globales
-
-  settings: {
-
-    appVersion: '1.0.0',
-
-    initialSetupCompleted: true, // Una bandera para saber si la inicialización ya se hizo
-
-    setupDate: new Date().toISOString()
-
+    await batch.commit();
+    console.log(`Colección de ${collection.id} creada con éxito.`);
+  } else {
+    console.log(`La colección de ${collection.id} ya existe.`);
   }
-
-};
-
-
-// --- 4. Función para inicializar la base de datos ---
-
-async function initializeDatabase() {
-
-  try {
-
-    console.log('Iniciando script de inicialización de la base de datos...');
-
-
-    // Opcional pero recomendado: Verifica si la base de datos ya está inicializada
-
-    // Esto evita que sobrescribas tus datos si ejecutas el script accidentalmente varias veces.
-
-    const settingsRef = db.ref('settings/initialSetupCompleted');
-
-    const snapshot = await settingsRef.once('value'); // 'once' lee los datos una sola vez
-
-
-    if (snapshot.exists() && snapshot.val() === true) {
-
-      console.log('¡Advertencia! La base de datos ya parece haber sido inicializada. Si deseas reiniciarla, elimina los datos manualmente o modifica el script.');
-
-      process.exit(0); // Sale del script sin error
-
-    }
-
-
-    // Si no está inicializada o la bandera no existe, procede a establecer los datos.
-
-    // 'db.ref('/')' apunta a la raíz de tu Realtime Database.
-
-    // 'set()' sobrescribe completamente los datos en esa ruta con 'initialData'.
-
-    await db.ref('/').set(initialData);
-
-
-    console.log('🎉 ¡Base de datos inicializada con éxito con la estructura inicial!');
-
-    process.exit(0); // Sale del script exitosamente
-
-  } catch (error) {
-
-    console.error('❌ ¡Error al inicializar la base de datos con Admin SDK!:', error);
-
-    process.exit(1); // Sale del script con un código de error
-
-  }
-
 }
 
+// Datos de ejemplo
+const usuariosData = [
+  { 
+    id: 'cliente-1',
+    nombre: 'Ana',
+    apellido: 'García',
+    DNI: '12345678A',
+    telefono: '600111222',
+    email: 'ana.garcia@example.com',
+    password: 'hashed_password_1',
+    fecha: new Date(),
+    rol: 'cliente'
+  },
+  {
+    id: 'admin-1',
+    nombre: 'Carlos',
+    apellido: 'Martínez',
+    DNI: '87654321Z',
+    telefono: '600333444',
+    email: 'carlos.martinez@example.com',
+    password: 'hashed_password_2',
+    fecha: new Date(),
+    rol: 'admin'
+  }
+];
 
-// Llama a la función para ejecutar el script
+const habitacionesData = [
+  {
+    id: 'hab-101',
+    numero: '101',
+    planta: '1',
+    tipo: 'individual',
+    capacidad: 1,
+    precio: 80.50,
+    disponibilidad: true
+  },
+  {
+    id: 'hab-205',
+    numero: '205',
+    planta: '2',
+    tipo: 'doble',
+    capacidad: 2,
+    precio: 120.00,
+    disponibilidad: false
+  },
+  {
+    id: 'hab-310',
+    numero: '310',
+    planta: '3',
+    tipo: 'suite',
+    capacidad: 4,
+    precio: 250.75,
+    disponibilidad: true
+  }
+];
 
-initializeDatabase();
+const reservasData = [
+  {
+    numero_reserva: 'res-001',
+    entrada: new Date(new Date().setDate(new Date().getDate() + 1)),
+    salida: new Date(new Date().setDate(new Date().getDate() + 5)),
+    reserva: new Date(),
+    estadoPago: true,
+    precioTotal: 480.00,
+    habitaciones: ['hab-205'], // Array de IDs de habitación
+    idCliente: 'cliente-1' // ID del usuario
+  }
+];
+
+const serviciosData = [
+    {
+        id: 'serv-01',
+        nombre: "Desayuno Buffet",
+        descripcion: "Acceso completo a nuestro desayuno buffet.",
+        precio: 15.00,
+        disponibilidad: true,
+        categoria: "Alimentación"
+    },
+    {
+        id: 'serv-02',
+        nombre: "Servicio de Spa",
+        descripcion: "Sesión de relajación de 1 hora en nuestro spa.",
+        precio: 75.00,
+        disponibilidad: true,
+        categoria: "Bienestar"
+    }
+];
+
+const llavesData = [
+    {
+        idLlave: 'llave-001',
+        codigoAcceso: 'NFC_CODE_A1B2C3D4', // Código que leería el NFC
+        fechaInicio: new Date(new Date().setDate(new Date().getDate() + 1)),
+        fechaExpiracion: new Date(new Date().setDate(new Date().getDate() + 5)),
+        activa: true,
+        idHabitacion: 'hab-205',
+        idReserva: 'res-001'
+    }
+];
+
+
+// Función principal para inicializar la base de datos
+async function initializeDatabase() {
+  const firestore = getFirestore();
+
+  await seedCollection(firestore.collection('usuarios'), usuariosData, 'id');
+  await seedCollection(firestore.collection('habitaciones'), habitacionesData, 'id');
+  await seedCollection(firestore.collection('reservas'), reservasData, 'numero_reserva');
+  await seedCollection(firestore.collection('servicios'), serviciosData, 'id');
+  await seedCollection(firestore.collection('llaves'), llavesData, 'idLlave');
+
+  console.log('Verificación de la base de datos completada.');
+}
+
+if (require.main === module) {
+  const { initializeApp, cert } = require("firebase-admin/app");
+  const serviceAccount = require("./serviceAccountKey.json");
+
+  try {
+    initializeApp({
+      credential: cert(serviceAccount)
+    });
+    console.log("App de Firebase inicializada para el script.");
+    initializeDatabase().catch(console.error);
+  } catch(e) {
+      if (e.code === 'app/duplicate-app') {
+          console.log('La app de Firebase ya parece estar inicializada.');
+          initializeDatabase().catch(console.error);
+      } else {
+          console.error("Error al inicializar la app de Firebase:", e);
+      }
+  }
+}
+
+module.exports = initializeDatabase;
