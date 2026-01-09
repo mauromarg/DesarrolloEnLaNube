@@ -99,10 +99,6 @@
                          details.style.display = details.style.display === 'block' ? 'none' : 'block';
                     }
                 }
-                const img = e.target.closest('.room-image-gallery img');
-                if (img) {
-                    openModal(img.src);
-                }
             });
         }
 
@@ -142,7 +138,7 @@
                     }
                     list.innerHTML = available.map(doc => {
                         const room = { id: doc.id, ...doc.data() };
-                        const imageGalleryHTML = room.imagenes && room.imagenes.length > 0 ? `<div class="room-image-gallery">${room.imagenes.map(img => `<img src="${img}" alt="Foto de la habitación">`).join('')}</div>` : '';
+                        const imageGalleryHTML = room.imagenes && room.imagenes.length > 0 ? `<div class="room-image-gallery">${room.imagenes.map(img => `<img src="${img}" alt="Foto de la habitación" onclick="openModal('${img}')">`).join('')}</div>` : '';
                         return `<li class="room-item">
                                     <div class="room-item-header">
                                         <span>${room.numero} (${room.tipo}) - $${room.precio}/noche</span>
