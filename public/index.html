@@ -272,9 +272,8 @@
         
         async function getUserProfile(user) {
             const userQuery = await db.collection('usuarios').where('email', '==', user.email).limit(1).get();
-            if (userQuery.empty) return null;
-            const doc = userQuery.docs[0];
-            return { id: doc.id, ...doc.data() };
+            console.log(userQuery);
+            console.log("caca");
         }
 
         function listenForUserReservation() {
