@@ -12,18 +12,32 @@
             align-items: center;
             height: 100vh;
             overflow: hidden;
+            margin: 0;
         }
-        #video-background {
+        #background-carousel {
             position: fixed;
             right: 0;
             bottom: 0;
             min-width: 100%;
             min-height: 100%;
             z-index: -1;
+        }
+        .background-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
             filter: blur(3px) brightness(0.7);
         }
+        .background-image.active {
+            opacity: 1;
+        }
         .login-container {
-            background: rgba(0, 0, 0, 0.5); /* Negro translúcido */
+            background: rgba(0, 0, 0, 0.5);
             padding: 40px;
             border-radius: 15px;
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
@@ -80,10 +94,7 @@
 </head>
 <body>
 
-    <video autoplay muted loop id="video-background">
-        <source src="https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" type="video/mp4">
-        Tu navegador no soporta vídeos HTML5.
-    </video>
+    <div id="background-carousel"></div>
 
     <div class="login-container">
         <h1>AppCheckIn</h1>
@@ -110,6 +121,41 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
     <script>
+        // --- Carrusel de Fondo ---
+        const images = [
+            'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1974&auto=format&fit=crop', // Restaurante
+            'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?q=80&w=2070&auto=format&fit=crop', // Piscina
+            'https://images.unsplash.com/photo-1520454974749-611bed2419af?q=80&w=2070&auto=format&fit=crop', // Playa
+            'https://images.unsplash.com/photo-1618773928121-c32242e63f39?q=80&w=2070&auto=format&fit=crop', // Habitación con balcón
+            'https://images.unsplash.com/photo-1543969787-c932342c35f2?q=80&w=2070&auto=format&fit=crop'  // Otra vista de piscina
+        ];
+        let currentImageIndex = 0;
+        const carouselContainer = document.getElementById('background-carousel');
+
+        // Precargar imágenes y crear elementos
+        const imageElements = images.map(src => {
+            const img = new Image();
+            img.src = src;
+            img.className = 'background-image';
+            carouselContainer.appendChild(img);
+            return img;
+        });
+
+        function showNextImage() {
+            imageElements[currentImageIndex].classList.remove('active');
+            currentImageIndex = (currentImageIndex + 1) % images.length;
+            imageElements[currentImageIndex].classList.add('active');
+        }
+
+        // Iniciar el carrusel cuando las imágenes estén listas
+        window.onload = () => {
+            if (imageElements.length > 0) {
+                imageElements[0].classList.add('active');
+                setInterval(showNextImage, 5000); // Cambiar imagen cada 5 segundos
+            }
+        };
+
+        // --- Lógica de Firebase ---
         const firebaseConfig = {
           apiKey: "AIzaSyBJkV7des2EtFX6EHJLUyzHJIvG7P86zGE",
           authDomain: "desarrolloenlanube-34667-816f5.firebaseapp.com",
@@ -156,7 +202,6 @@
                 });
         });
 
-        // Iniciar sesión con Google (forzando la selección de cuenta)
         document.getElementById('google-login-btn').addEventListener('click', () => {
             const provider = new firebase.auth.GoogleAuthProvider();
             provider.setCustomParameters({ prompt: 'select_account' });
@@ -165,7 +210,6 @@
             });
         });
 
-        // Iniciar sesión con Apple
         document.getElementById('apple-login-btn').addEventListener('click', () => {
             const provider = new firebase.auth.OAuthProvider('apple.com');
             auth.signInWithPopup(provider).catch(error => {
@@ -173,7 +217,6 @@
                 console.error("Error de Apple Sign-In:", error);
             });
         });
-
     </script>
 </body>
 </html>
