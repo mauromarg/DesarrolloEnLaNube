@@ -40,6 +40,16 @@
         h1 { font-size: 1.5rem; }
         h2 { font-size: 1.2rem; margin-bottom: 20px; }
 
+        #user-info {
+            text-align: right;
+        }
+
+        #user-email {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin: 0 0 5px 0;
+        }
+
         .main-container { padding: 30px 40px; }
 
         .content-box, .control-card {
@@ -137,7 +147,10 @@
 <body>
     <div class="header">
         <h1>AppCheckIn</h1>
-        <button id="logout-btn">Cerrar Sesión</button>
+        <div id="user-info">
+            <p id="user-email"></p>
+            <button id="logout-btn">Cerrar Sesión</button>
+        </div>
     </div>
 
     <div id="guest-dashboard" class="main-container hidden">
@@ -184,6 +197,7 @@
 
         auth.onAuthStateChanged(async user => {
             if (user) {
+                document.getElementById('user-email').textContent = user.email;
                 const userProfile = await getUserProfile(user);
                 document.getElementById('loading-message').classList.add('hidden');
 
@@ -195,7 +209,6 @@
 
                 const role = userProfile.rol || 'huesped';
                 
-                // HARDCODED ADMIN CHECK
                 if (role === 'admin' && user.email === 'admin@test.com') {
                     document.getElementById('admin-dashboard').classList.remove('hidden');
                     loadAdminData();
