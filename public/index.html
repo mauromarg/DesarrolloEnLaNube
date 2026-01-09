@@ -194,7 +194,9 @@
                 }
 
                 const role = userProfile.rol || 'huesped';
-                if (role === 'admin') {
+                
+                // HARDCODED ADMIN CHECK
+                if (role === 'admin' && user.email === 'admin@test.com') {
                     document.getElementById('admin-dashboard').classList.remove('hidden');
                     loadAdminData();
                 } else {
