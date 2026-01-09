@@ -194,25 +194,21 @@
             auth.createUserWithEmailAndPassword(email, password)
                 .then(userCredential => {
                     const user = userCredential.user;
-                    // 1. Enviar el correo de verificación
-                    return user.sendEmailVerification().then(() => {
-                        // 2. Guardar el perfil del usuario en Firestore
-                        return db.collection('usuarios').doc(user.uid).set({
-                            nombre: name,
-                            email: email,
-                            telefono: phone,
-                            nacionalidad: nationality,
-                            documentoId: documentId,
-                            rol: 'cliente',
-                            emailVerified: false // El estado de verificación inicial es falso
-                        });
+                    // 1. Guardar el perfil del usuario en Firestore (sin verificación de correo)
+                    return db.collection('usuarios').doc(user.uid).set({
+                        nombre: name,
+                        email: email,
+                        telefono: phone,
+                        nacionalidad: nationality,
+                        documentoId: documentId,
+                        rol: 'cliente',
+                        emailVerified: true // El correo se considera verificado
                     }).then(() => {
-                        // 3. Mostrar mensaje de éxito
+                        // 2. Mostrar mensaje de éxito
                         const container = document.getElementById('register-container');
                         container.innerHTML = `
-                            <h1>¡Revisa tu correo!</h1>
-                            <p>Hemos enviado un enlace de verificación a <strong>${email}</strong>.</p>
-                            <p>Por favor, haz clic en el enlace para activar tu cuenta antes de iniciar sesión.</p>
+                            <h1>¡Registro Completado!</h1>
+                            <p>Tu cuenta se ha creado correctamente.</p>
                             <button onclick="window.location.href='/login.html?registration=success'" class="btn btn-secondary">Ir al Login</button>
                         `;
                     });

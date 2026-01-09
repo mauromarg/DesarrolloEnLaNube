@@ -56,12 +56,6 @@
             padding: 12px; border-radius: 8px;
         }
          #message-area.hidden, #error-message.hidden { display: none; }
-        
-        #resend-verification-container {
-            margin-top: 15px; font-size: 0.9rem;
-        }
-        #resend-verification-container a { color: #008cff; text-decoration: none; }
-        #resend-verification-container a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -76,9 +70,6 @@
             <input type="email" id="email" placeholder="Correo electrónico" required>
             <input type="password" id="password" placeholder="Contraseña" required>
             <button type="submit" id="login-btn" class="btn">Iniciar Sesión</button>
-             <div id="resend-verification-container" class="hidden">
-                <a href="#" id="resend-verification-link">Reenviar correo de verificación</a>
-            </div>
         </form>
 
         <button id="register-redirect-btn" class="btn">¿No tienes cuenta? Regístrate</button>
@@ -105,14 +96,10 @@
         const auth = firebase.auth();
         const messageArea = document.getElementById('message-area');
         const errorMessage = document.getElementById('error-message');
-        const resendContainer = document.getElementById('resend-verification-container');
-        const resendLink = document.getElementById('resend-verification-link');
 
-        let unverifiedUser = null;
-
-        // Redirige si el usuario ya está logueado y verificado
+        // Redirige si el usuario ya está logueado
         auth.onAuthStateChanged(user => {
-            if (user && user.emailVerified) {
+            if (user) { // No se comprueba si el email está verificado
                 window.location.href = '/index.html';
             }
         });
@@ -124,7 +111,6 @@
             
             messageArea.classList.add('hidden');
             errorMessage.classList.add('hidden');
-            resendContainer.classList.add('hidden');
 
             if (!email || !password) {
                 showError('Por favor, ingresa correo y contraseña.');
@@ -133,14 +119,7 @@
 
             auth.signInWithEmailAndPassword(email, password)
                 .then(userCredential => {
-                    const user = userCredential.user;
-                    if (user && !user.emailVerified) {
-                        unverifiedUser = user; // Guardar para poder reenviar el correo
-                        showError('Debes verificar tu correo electrónico para poder iniciar sesión.');
-                        resendContainer.classList.remove('hidden');
-                        auth.signOut(); // Desloguear para no mantener estado inconsistente
-                    } 
-                    // Si el usuario está verificado, el onAuthStateChanged se encargará de redirigir.
+                    // El observer onAuthStateChanged se encargará de la redirección
                 })
                 .catch(error => {
                     switch (error.code) {
@@ -155,24 +134,11 @@
                     }
                 });
         });
-
-        resendLink.addEventListener('click', e => {
-            e.preventDefault();
-            if (unverifiedUser) {
-                unverifiedUser.sendEmailVerification()
-                    .then(() => {
-                        showSuccess('Se ha enviado un nuevo enlace de verificación a tu correo.');
-                        errorMessage.classList.add('hidden');
-                        resendContainer.classList.add('hidden');
-                    })
-                    .catch(err => showError('Error al reenviar el correo. Inténtalo de nuevo más tarde.'));
-            }
-        });
         
         function handleUrlParams() {
              const params = new URLSearchParams(window.location.search);
              if (params.has('registration') && params.get('registration') === 'success') {
-                showSuccess("¡Registro exitoso! Por favor, revisa tu correo para verificar tu cuenta antes de iniciar sesión.");
+                showSuccess("¡Cuenta creada! Ya puedes iniciar sesión.");
              }
         }
 
