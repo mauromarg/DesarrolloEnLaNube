@@ -24,6 +24,8 @@
         .room-details { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color); }
         .room-image-gallery { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; }
         .room-image-gallery img { width: 120px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color); }
+        .suggestion-item { padding: 10px; cursor: pointer; background-color: #333; border-bottom: 1px solid var(--border-color); }
+        .suggestion-item:hover { background-color: var(--primary-accent); }
     </style>
 </head>
 <body>
@@ -35,7 +37,12 @@
         </div>
     </div>
     <div class="container">
-        <div class="content-box"><h2>Clientes</h2><ul id="client-list"><li>Cargando...</li></ul></div>
+        <div class="content-box">
+            <h2>Clientes</h2>
+            <input type="text" id="user-search" placeholder="Buscar usuario por email..." style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--border-color); background-color: #2a2a2a; color: var(--text-primary);">
+            <div id="user-suggestions"></div>
+            <div id="user-details" style="margin-top: 20px;"></div>
+        </div>
         <div class="content-box"><h2>Habitaciones</h2>
             <div class="filter-buttons">
                 <button onclick="filterRooms('all')" class="active">Todas</button>
@@ -76,6 +83,7 @@
                         window.location.href = '/index.html';
                     } else {
                         loadInitialData();
+                        setupUserSearch();
                     }
                 });
             } else {
@@ -84,14 +92,58 @@
         });
 
         function loadInitialData() {
-            db.collection('usuarios').onSnapshot(snap => { allUsers = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderClients(); renderRooms(); });
+            db.collection('usuarios').onSnapshot(snap => { 
+                allUsers = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })); 
+                renderRooms(); 
+            });
             db.collection('habitaciones').onSnapshot(snap => { allRooms = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderRooms(); });
             db.collection('reservas').onSnapshot(snap => { allReservations = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderRooms(); });
         }
 
-        function renderClients() {
-            const clientList = document.getElementById('client-list');
-            clientList.innerHTML = allUsers.map(user => `<li class="item">${user.email} (${user.rol || 'cliente'})</li>`).join('') || '<li>No hay clientes.</li>';
+        function setupUserSearch() {
+            const searchInput = document.getElementById('user-search');
+            const suggestionsContainer = document.getElementById('user-suggestions');
+            const userDetailsContainer = document.getElementById('user-details');
+
+            searchInput.addEventListener('input', () => {
+                const searchTerm = searchInput.value.toLowerCase();
+                if (searchTerm.length < 2) {
+                    suggestionsContainer.innerHTML = '';
+                    return;
+                }
+
+                const filteredUsers = allUsers.filter(user => user.email.toLowerCase().includes(searchTerm));
+                
+                suggestionsContainer.innerHTML = filteredUsers.map(user => 
+                    `<div class="suggestion-item" data-id="${user.id}">${user.email}</div>`
+                ).join('');
+            });
+
+            suggestionsContainer.addEventListener('click', (event) => {
+                if (event.target.classList.contains('suggestion-item')) {
+                    const userId = event.target.getAttribute('data-id');
+                    displayUserDetails(userId);
+                    suggestionsContainer.innerHTML = '';
+                    searchInput.value = '';
+                }
+            });
+        }
+
+        function displayUserDetails(userId) {
+            const user = allUsers.find(u => u.id === userId);
+            const userDetailsContainer = document.getElementById('user-details');
+            
+            if (user) {
+                let detailsHTML = '<h3>Detalles del Usuario</h3>';
+                for (const [key, value] of Object.entries(user)) {
+                    if (key !== 'id') { // Don't display the user ID
+                        detailsHTML += `<p><strong>${key}:</strong> ${value}</p>`;
+                    }
+                }
+                userDetailsContainer.innerHTML = detailsHTML;
+            } else {
+                userDetailsContainer.innerHTML = '<p>Usuario no encontrado.</p>';
+            }
         }
 
         function renderRooms() {
