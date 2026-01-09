@@ -73,7 +73,7 @@
                 const reservationsList = document.getElementById('reservations-list');
                 const clientsList = document.getElementById('clients-list');
                 
-                const loadClients = db.collection('clientes').get();
+                const loadClients = db.collection('usuarios').get();
                 const loadRooms = db.collection('habitaciones').get();
 
                 Promise.all([loadClients, loadRooms]).then(([clientsSnapshot, roomsSnapshot]) => {
