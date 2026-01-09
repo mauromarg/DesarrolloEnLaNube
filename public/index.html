@@ -3,55 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AppCheckIn - Gestión de Hotel (Versión Gratuita)</title>
+    <title>AppCheckIn - Gestión de Hotel</title>
     <style>
-        body { font-family: sans-serif; margin: 2em; background-color: #f9f9f9; color: #333; }
-        h1, h2 { color: #0056b3; }
-        .header { display: flex; justify-content: space-between; align-items: center; }
-        .container { display: flex; flex-wrap: wrap; gap: 20px; }
-        .section { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; min-width: 300px;}
-        .section ul { list-style: none; padding: 0; }
-        .section li { background: #f0f0f0; margin-bottom: 10px; padding: 10px; border-radius: 5px; }
-        .form-section { background: #eee; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 20px; opacity: 0.6; }
-        .form-section input, .form-section select, .form-section textarea { width: calc(100% - 22px); padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        .form-section button { background-color: #999; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: not-allowed; }
-        #logout-btn { background-color: #dc3545; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; }
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            color: white;
+            overflow-x: hidden;
+        }
+        #background-carousel {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+        }
+        .background-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+            filter: blur(3px) brightness(0.7);
+        }
+        .background-image.active {
+            opacity: 1;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(5px);
+        }
+        h1, h2 {
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+        .main-container { 
+            padding: 20px 40px;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .content-box {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            flex: 1; 
+            min-width: 300px;
+        }
+        .content-box ul {
+            list-style: none;
+            padding: 0;
+        }
+        .content-box li {
+            background: rgba(255, 255, 255, 0.1);
+            margin-bottom: 10px;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 15px;
+        }
+        #reservation-form-section {
+             margin-top: 20px;
+        }
+        #reservation-form-section p {
+            color: #eee;
+        }
+        .form-disabled-overlay input, .form-disabled-overlay select, .form-disabled-overlay textarea {
+            width: calc(100% - 24px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #999;
+        }
+         .form-disabled-overlay button {
+            background-color: #555;
+            color: #999;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: not-allowed;
+         }
+        #logout-btn {
+            background-color: #dc3545;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #logout-btn:hover { background-color: #c82333; }
     </style>
 </head>
 <body>
+    <div id="background-carousel"></div>
 
     <div class="header">
-        <h1>Bienvenido a AppCheckIn (Versión Gratuita)</h1>
+        <h1>AppCheckIn</h1>
         <button id="logout-btn">Cerrar Sesión</button>
     </div>
 
-    <div class="container">
-        <div id="rooms-section" class="section">
-            <h2>Habitaciones</h2>
-            <ul id="rooms-list"><p>Cargando habitaciones...</p></ul>
+    <div class="main-container">
+        <div class="container">
+            <div id="rooms-section" class="content-box">
+                <h2>Habitaciones</h2>
+                <ul id="rooms-list"><p>Cargando habitaciones...</p></ul>
+            </div>
+
+            <div id="reservations-section" class="content-box">
+                <h2>Reservas</h2>
+                <ul id="reservations-list"><p>Cargando reservas...</p></ul>
+            </div>
+
+            <div id="clients-section" class="content-box">
+                <h2>Clientes</h2>
+                <ul id="clients-list"><p>Cargando clientes...</p></ul>
+            </div>
         </div>
 
-        <div id="reservations-section" class="section">
-            <h2>Reservas</h2>
-            <ul id="reservations-list"><p>Cargando reservas...</p></ul>
+        <div id="reservation-form-section" class="content-box">
+            <h2>Crear Nueva Reserva (Deshabilitado)</h2>
+            <p>Para mantener la aplicación 100% gratuita y segura, la creación de nuevas reservas debe hacerse desde la consola de Firebase.</p>
+            <div id="reservation-form" class="form-disabled-overlay">
+                <select id="client-id" required disabled><option value="">Seleccione un cliente</option></select>
+                <input type="date" id="start-date" required disabled>
+                <input type="date" id="end-date" required disabled>
+                <select id="room-id" required disabled><option value="">Seleccione fechas para ver habitaciones</option></select>
+                <button type="submit" disabled>Crear Reserva</button>
+            </div>
         </div>
-
-        <div id="clients-section" class="section">
-            <h2>Clientes</h2>
-            <ul id="clients-list"><p>Cargando clientes...</p></ul>
-        </div>
-    </div>
-
-    <div id="reservation-form-section" class="form-section">
-        <h2>Crear Nueva Reserva (Deshabilitado en modo gratuito)</h2>
-        <p>Para mantener la aplicación 100% gratuita y segura, la creación de nuevas reservas debe hacerse directamente en la consola de Firebase.</p>
-        <form id="reservation-form">
-            <select id="client-id" required disabled><option value="">Seleccione un cliente</option></select>
-            <input type="date" id="start-date" required disabled>
-            <input type="date" id="end-date" required disabled>
-            <select id="room-id" required disabled><option value="">Seleccione fechas para ver habitaciones</option></select>
-            <button type="submit" disabled>Crear Reserva</button>
-        </form>
     </div>
 
     <!-- SDK de Firebase -->
@@ -60,33 +156,60 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <script>
+        // --- Carrusel de Fondo ---
+        const images = [
+            'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1974&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?q=80&w=2070&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1520454974749-611bed2419af?q=80&w=2070&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1618773928121-c32242e63f39?q=80&w=2070&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1543969787-c932342c35f2?q=80&w=2070&auto=format&fit=crop'
+        ];
+        let currentImageIndex = 0;
+        const carouselContainer = document.getElementById('background-carousel');
+        const imageElements = images.map(src => {
+            const img = new Image();
+            img.src = src;
+            img.className = 'background-image';
+            carouselContainer.appendChild(img);
+            return img;
+        });
+
+        function showNextImage() {
+            imageElements[currentImageIndex].classList.remove('active');
+            currentImageIndex = (currentImageIndex + 1) % images.length;
+            imageElements[currentImageIndex].classList.add('active');
+        }
+
+        window.onload = () => {
+            if (imageElements.length > 0) {
+                imageElements[0].classList.add('active');
+                setInterval(showNextImage, 5000);
+            }
+        };
+        
+        // --- Lógica de Firebase ---
         const firebaseConfig = {
           apiKey: "AIzaSyBJkV7des2EtFX6EHJLUyzHJIvG7P86zGE",
           authDomain: "desarrolloenlanube-34667-816f5.firebaseapp.com",
           databaseURL: "https://desarrolloenlanube-34667-816f5-default-rtdb.firebaseio.com",
           projectId: "desarrolloenlanube-34667-816f5",
-          storageBucket: "desarrolloenlanube-34667-816f5.firebasestorage.app",
+          storageBucket: "desarrolloenlanube-34667-816f5.appspot.com",
           messagingSenderId: "438315579198",
           appId: "1:438315579198:web:51bcb77a9789c1981ade6f"
         };
 
-        // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Proteger la página
         auth.onAuthStateChanged(user => {
             if (user) {
-                // El usuario ha iniciado sesión, cargar datos
                 loadData();
             } else {
-                // El usuario no ha iniciado sesión, redirigir a login.html
                 window.location.href = '/login.html';
             }
         });
         
-        // Cerrar sesión
         document.getElementById('logout-btn').addEventListener('click', () => {
             auth.signOut();
         });
@@ -103,7 +226,6 @@
                 const clientsData = clientsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 const roomsData = roomsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-                // Populate clients list
                 clientsList.innerHTML = '';
                 clientsData.forEach(client => {
                     const li = document.createElement('li');
@@ -111,7 +233,6 @@
                     clientsList.appendChild(li);
                 });
 
-                // Populate rooms list
                 roomsList.innerHTML = '';
                 roomsData.forEach(room => {
                     const li = document.createElement('li');
@@ -119,21 +240,16 @@
                     roomsList.appendChild(li);
                 });
 
-                // Now that clients and rooms are loaded, load reservations
                 return db.collection('reservas').get().then(reservasSnapshot => {
                     reservationsList.innerHTML = '';
                     reservasSnapshot.docs.forEach(doc => {
                         const reserva = doc.data();
-                        // Firestore guarda Timestamps, necesitamos convertirlos a Date
                         const fechaEntrada = reserva.fechaEntrada.toDate();
-                        
                         const cliente = clientsData.find(c => c.id === reserva.clienteId);
                         const habitacion = roomsData.find(h => h.id === reserva.habitacionId);
                         const li = document.createElement('li');
-                        
                         const clienteNombre = cliente ? cliente.nombre : 'Cliente no encontrado';
                         const habitacionNumero = habitacion ? `Habitación ${habitacion.numero}` : 'Habitación no encontrada';
-                        
                         li.textContent = `Reserva de ${clienteNombre} en ${habitacionNumero} (Entrada: ${fechaEntrada.toLocaleDateString()})`;
                         reservationsList.appendChild(li);
                     });
@@ -141,12 +257,12 @@
 
             }).catch(err => {
                 console.error("Error al cargar datos:", err);
-                clientsList.innerHTML = `<p>Error al cargar datos. Revisa la configuración de Firebase y las reglas de seguridad.</p>`;
-                roomsList.innerHTML = '<p>Asegúrate de haber pegado la configuración correcta de Firebase en el script.</p>';
+                const errorMsg = `<p>Error al cargar datos. Revisa la configuración y las reglas de seguridad de Firebase.</p>`;
+                clientsList.innerHTML = errorMsg;
+                roomsList.innerHTML = '';
                 reservationsList.innerHTML = '';
             });
         }
     </script>
-
 </body>
 </html>
