@@ -25,10 +25,15 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             text-align: center;
             width: 400px;
+            transition: all 0.3s ease-in-out;
         }
-        h1 { 
+        .register-container h1 { 
             margin-bottom: 25px; 
             font-size: 1.8rem;
+        }
+         .register-container p {
+            color: #b3b3b3;
+            line-height: 1.6;
         }
         .input-group {
             position: relative;
@@ -42,7 +47,7 @@
             background: rgba(255, 255, 255, 0.05);
             color: white;
             font-size: 16px;
-            box-sizing: border-box; /* Important for padding */
+            box-sizing: border-box;
         }
         .password-visibility-toggle {
             margin-top: 15px;
@@ -88,29 +93,31 @@
     </style>
 </head>
 <body>
-    <div class="register-container">
-        <h1>Crear Cuenta</h1>
-        <div class="input-group">
-            <input type="text" id="name" placeholder="Nombre completo" required>
-        </div>
-        <div class="input-group">
-            <input type="email" id="email" placeholder="Correo electrónico" required>
-        </div>
-        <div class="input-group">
-            <input type="password" id="password" placeholder="Contraseña (mín. 6 caracteres)" required>
-        </div>
-        <div class="input-group">
-            <input type="password" id="confirm-password" placeholder="Confirmar contraseña" required>
-        </div>
-        <div class="password-visibility-toggle">
-            <input type="checkbox" id="show-password-checkbox">
-            <label for="show-password-checkbox">Mostrar contraseñas</label>
-        </div>
-        
-        <div id="error-message"></div>
+    <div class="register-container" id="register-container">
+        <form id="register-form">
+            <h1>Crear Cuenta</h1>
+            <div class="input-group">
+                <input type="text" id="name" placeholder="Nombre completo" required>
+            </div>
+            <div class="input-group">
+                <input type="email" id="email" placeholder="Correo electrónico" required>
+            </div>
+            <div class="input-group">
+                <input type="password" id="password" placeholder="Contraseña (mín. 6 caracteres)" required>
+            </div>
+            <div class="input-group">
+                <input type="password" id="confirm-password" placeholder="Confirmar contraseña" required>
+            </div>
+            <div class="password-visibility-toggle">
+                <input type="checkbox" id="show-password-checkbox">
+                <label for="show-password-checkbox">Mostrar contraseñas</label>
+            </div>
+            
+            <div id="error-message"></div>
 
-        <button id="register-btn" class="btn" style="margin-top: 20px;">Crear Cuenta</button>
-        <button onclick="window.location.href='/login.html'" class="btn btn-secondary">Volver al Login</button>
+            <button type="submit" id="register-btn" class="btn" style="margin-top: 20px;">Crear Cuenta</button>
+            <button type="button" onclick="window.location.href='/login.html'" class="btn btn-secondary">Volver al Login</button>
+        </form>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -132,6 +139,7 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
         
+        const registerForm = document.getElementById('register-form');
         const nameInput = document.getElementById('name');
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
@@ -145,13 +153,15 @@
             confirmPasswordInput.type = isChecked ? 'text' : 'password';
         });
 
-        document.getElementById('register-btn').addEventListener('click', () => {
+        registerForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
             const name = nameInput.value;
             const email = emailInput.value;
             const password = passwordInput.value;
             const confirmPassword = confirmPasswordInput.value;
             
-            errorMessage.textContent = ''; // Limpiar errores previos
+            errorMessage.textContent = '';
 
             if (!name || !email || !password || !confirmPassword) {
                 errorMessage.textContent = 'Por favor, completa todos los campos.';
@@ -168,15 +178,26 @@
 
             auth.createUserWithEmailAndPassword(email, password)
                 .then(userCredential => {
-                    return db.collection('usuarios').doc(userCredential.user.uid).set({
-                        nombre: name,
-                        email: email,
-                        rol: 'huesped'
+                    const user = userCredential.user;
+                    // 1. Enviar el correo de verificación
+                    return user.sendEmailVerification().then(() => {
+                        // 2. Guardar el perfil del usuario en Firestore
+                        return db.collection('usuarios').doc(user.uid).set({
+                            nombre: name,
+                            email: email,
+                            rol: 'huesped',
+                            emailVerified: false // El estado de verificación inicial es falso
+                        });
+                    }).then(() => {
+                        // 3. Mostrar mensaje de éxito en lugar de redirigir
+                        const container = document.getElementById('register-container');
+                        container.innerHTML = `
+                            <h1>¡Revisa tu correo!</h1>
+                            <p>Hemos enviado un enlace de verificación a <strong>${email}</strong>.</p>
+                            <p>Por favor, haz clic en el enlace para activar tu cuenta antes de iniciar sesión.</p>
+                            <button onclick="window.location.href='/login.html'" class="btn btn-secondary">Ir al Login</button>
+                        `;
                     });
-                })
-                .then(() => {
-                    // Redirige al usuario a la página de login para que inicie sesión
-                    window.location.href = '/login.html?registration=success';
                 })
                 .catch(error => {
                     switch (error.code) {
@@ -190,7 +211,7 @@
                              errorMessage.textContent = 'La contraseña es demasiado débil.';
                              break;
                         default:
-                            errorMessage.textContent = 'Error: ' + error.message;
+                            errorMessage.textContent = 'Error al registrar: ' + error.message;
                     }
                 });
         });
