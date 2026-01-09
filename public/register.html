@@ -71,7 +71,7 @@
             width: 100%;
             font-size: 16px;
             font-weight: 600;
-            transition: background-color 0.3s;
+            transition: background-color: 0.3s;
         }
         .btn:hover { background-color: #0073d1; }
         
@@ -185,7 +185,7 @@
                         return db.collection('usuarios').doc(user.uid).set({
                             nombre: name,
                             email: email,
-                            rol: 'huesped',
+                            rol: 'cliente',
                             emailVerified: false // El estado de verificación inicial es falso
                         });
                     }).then(() => {
@@ -195,7 +195,7 @@
                             <h1>¡Revisa tu correo!</h1>
                             <p>Hemos enviado un enlace de verificación a <strong>${email}</strong>.</p>
                             <p>Por favor, haz clic en el enlace para activar tu cuenta antes de iniciar sesión.</p>
-                            <button onclick="window.location.href='/login.html'" class="btn btn-secondary">Ir al Login</button>
+                            <button onclick="window.location.href='/login.html?registration=success'" class="btn btn-secondary">Ir al Login</button>
                         `;
                     });
                 })

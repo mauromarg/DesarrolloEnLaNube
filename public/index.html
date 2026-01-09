@@ -250,7 +250,7 @@
                         return;
                     }
 
-                    document.getElementById('user-role').textContent = `Rol: ${currentUserProfile.rol || 'huesped'}`;
+                    document.getElementById('user-role').textContent = `Rol: ${currentUserProfile.rol || 'cliente'}`;
                     
                     if (currentUserProfile.rol === 'admin') {
                         document.getElementById('admin-dashboard').classList.remove('hidden');
