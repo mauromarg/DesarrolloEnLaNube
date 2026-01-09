@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AppCheckIn - Control de Habitación</title>
+    <title>AppCheckIn</title>
     <style>
         :root {
             --background-dark: #121212;
@@ -35,120 +35,108 @@
         h1, h2 {
             margin: 0;
             color: var(--text-primary);
-            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
 
         h1 { font-size: 1.5rem; }
         h2 { font-size: 1.2rem; margin-bottom: 20px; }
 
-        .main-container {
-            padding: 30px 40px;
-        }
+        .main-container { padding: 30px 40px; }
 
-        #room-info {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        #room-info h1 {
-            font-size: 2rem;
-            color: var(--primary-accent);
-        }
-
-        #room-info p {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-        }
-
-        .controls-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-        }
-
-        .control-card {
+        /* Estilos de las tarjetas y contenedores */
+        .content-box, .control-card {
             background: var(--surface-dark);
             padding: 25px;
             border-radius: 15px;
             border: 1px solid var(--border-color);
             box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+        
+        /* Grid para ambas vistas */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        /* --- VISTA HUÉSPED --- */
+        #guest-dashboard #room-info {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        #guest-dashboard #room-info h1 {
+            font-size: 2rem;
+            color: var(--primary-accent);
+        }
+        #guest-dashboard #room-info p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+        .control-card {
             display: flex;
             flex-direction: column;
         }
-
         .control-card .status {
             font-size: 0.9rem;
             color: var(--text-secondary);
             margin-top: 10px;
         }
-        
         .control-card .main-action {
              flex-grow: 1;
              display: flex;
              align-items: center;
              justify-content: center;
         }
-
+        .ac-temperature { font-size: 2.5rem; font-weight: 600; }
         .btn {
             background-color: var(--primary-accent);
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-            font-size: 1rem;
-            font-weight: 600;
+            color: white; padding: 12px 20px; border: none;
+            border-radius: 8px; cursor: pointer; width: 100%;
+            font-size: 1rem; font-weight: 600;
             transition: background-color 0.3s, transform 0.1s;
         }
         .btn:hover { background-color: #0073d1; }
         .btn:active { transform: scale(0.98); }
 
-        /* Switch styles */
+        /* --- VISTA ADMIN --- */
+        #admin-dashboard ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        #admin-dashboard li {
+            background: rgba(255, 255, 255, 0.05);
+            margin-bottom: 10px;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            font-size: 15px;
+        }
+
+        /* --- Controles comunes --- */
+        #logout-btn {
+            background-color: #c82333; color: white; padding: 10px 15px;
+            border: none; border-radius: 8px; cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #logout-btn:hover { background-color: #a81d2a; }
         .switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
+            position: relative; display: inline-block;
+            width: 60px; height: 34px;
         }
         .switch input { display: none; }
         .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #333;
-            transition: .4s;
-            border-radius: 34px;
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #333; transition: .4s; border-radius: 34px;
         }
         .slider:before {
-            position: absolute;
-            content: "";
-            height: 26px; width: 26px;
-            left: 4px; bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
+            position: absolute; content: ""; height: 26px; width: 26px;
+            left: 4px; bottom: 4px; background-color: white;
+            transition: .4s; border-radius: 50%;
         }
         input:checked + .slider { background-color: var(--primary-accent); }
         input:checked + .slider:before { transform: translateX(26px); }
 
-        .ac-temperature {
-            font-size: 2.5rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        #logout-btn {
-            background-color: #c82333;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        #logout-btn:hover { background-color: #a81d2a; }
-
+        .hidden { display: none; }
     </style>
 </head>
 <body>
@@ -157,62 +145,62 @@
         <button id="logout-btn">Cerrar Sesión</button>
     </div>
 
-    <div class="main-container">
+    <!-- VISTA PARA HUÉSPEDES -->
+    <div id="guest-dashboard" class="main-container hidden">
         <div id="room-info">
             <h1 id="room-number-header">Cargando...</h1>
-            <p id="room-type-header">Inicia sesión para ver tu habitación</p>
+            <p id="room-type-header">Buscando tu habitación...</p>
         </div>
-
-        <div class="controls-grid">
-            <!-- Acceso a la habitación -->
+        <div class="grid-container">
             <div class="control-card">
                 <h2>Acceso Puerta</h2>
-                <div class="main-action">
-                    <button id="door-btn" class="btn">Desbloquear Puerta</button>
-                </div>
+                <div class="main-action"><button id="door-btn" class="btn">Desbloquear Puerta</button></div>
                 <p id="door-status" class="status">Pulsa para abrir</p>
             </div>
-
-            <!-- Control de Luces -->
             <div class="control-card">
-                <h2>Iluminación Principal</h2>
-                 <div class="main-action">
-                    <label class="switch">
-                        <input type="checkbox" id="light-switch">
-                        <span class="slider"></span>
-                    </label>
-                </div>
+                <h2>Iluminación</h2>
+                 <div class="main-action"><label class="switch"><input type="checkbox" id="light-switch"><span class="slider"></span></label></div>
                 <p id="light-status" class="status">Apagada</p>
             </div>
-
-            <!-- Control de Cortinas -->
             <div class="control-card">
                 <h2>Cortinas</h2>
-                 <div class="main-action">
-                    <label class="switch">
-                        <input type="checkbox" id="curtain-switch">
-                        <span class="slider"></span>
-                    </label>
-                </div>
+                 <div class="main-action"><label class="switch"><input type="checkbox" id="curtain-switch"><span class="slider"></span></label></div>
                 <p id="curtain-status" class="status">Cerradas</p>
             </div>
-            
-            <!-- Aire Acondicionado -->
             <div class="control-card">
                 <h2>Climatización</h2>
                 <div class="main-action" style="flex-direction: column;">
                      <p class="ac-temperature" id="ac-temp">22°C</p>
-                     <label class="switch">
-                        <input type="checkbox" id="ac-switch">
-                        <span class="slider"></span>
-                    </label>
+                     <label class="switch"><input type="checkbox" id="ac-switch"><span class="slider"></span></label>
                 </div>
                 <p id="ac-status" class="status">Apagado</p>
             </div>
         </div>
     </div>
 
-    <!-- SDK de Firebase -->
+    <!-- VISTA PARA ADMINISTRADORES -->
+    <div id="admin-dashboard" class="main-container hidden">
+        <div class="grid-container">
+            <div id="rooms-section" class="content-box">
+                <h2>Habitaciones</h2>
+                <ul id="rooms-list"><p>Cargando...</p></ul>
+            </div>
+            <div id="reservations-section" class="content-box">
+                <h2>Reservas</h2>
+                <ul id="reservations-list"><p>Cargando...</p></ul>
+            </div>
+            <div id="clients-section" class="content-box">
+                <h2>Clientes</h2>
+                <ul id="clients-list"><p>Cargando...</p></ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mensaje de Carga Inicial -->
+    <div id="loading-message" class="main-container" style="text-align: center;">
+        <h2>Verificando usuario...</h2>
+    </div>
+
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -232,101 +220,137 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        auth.onAuthStateChanged(user => {
+        auth.onAuthStateChanged(async user => {
             if (user) {
-                findUserRoom(user);
+                const userProfile = await getUserProfile(user);
+                const role = userProfile ? userProfile.rol : 'huesped'; // Default a huésped
+
+                document.getElementById('loading-message').classList.add('hidden');
+
+                if (role === 'admin') {
+                    document.getElementById('admin-dashboard').classList.remove('hidden');
+                    loadAdminData();
+                } else {
+                    document.getElementById('guest-dashboard').classList.remove('hidden');
+                    findUserRoom(user, userProfile);
+                }
             } else {
                 window.location.href = '/login.html';
             }
         });
         
-        document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
+        async function getUserProfile(user) {
+            const userQuery = await db.collection('usuarios').where('email', '==', user.email).limit(1).get();
+            if (userQuery.empty) return null;
+            const doc = userQuery.docs[0];
+            return { id: doc.id, ...doc.data() };
+        }
 
-        async function findUserRoom(user) {
-            try {
-                // 1. Buscar el documento del usuario en 'usuarios' usando su email.
-                const userQuery = await db.collection('usuarios').where('email', '==', user.email).limit(1).get();
-                if (userQuery.empty) {
-                    showError("No se encontró tu perfil de cliente.");
-                    return;
-                }
-                const userDocId = userQuery.docs[0].id;
+        // --- LÓGICA DE ADMINISTRADOR ---
+        function loadAdminData() {
+            const loadClients = db.collection('usuarios').get();
+            const loadRooms = db.collection('habitaciones').get();
+            const loadReservations = db.collection('reservas').get();
+
+            Promise.all([loadClients, loadRooms, loadReservations]).then(([clientsSnap, roomsSnap, reservationsSnap]) => {
+                const clientsData = clientsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const roomsData = roomsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                // Renderizar Clientes
+                const clientsList = document.getElementById('clients-list');
+                clientsList.innerHTML = '';
+                clientsData.forEach(c => {
+                    const li = document.createElement('li');
+                    li.textContent = `${c.nombre} (${c.email}) - Rol: ${c.rol || 'huesped'}`;
+                    clientsList.appendChild(li);
+                });
+
+                // Renderizar Habitaciones
+                const roomsList = document.getElementById('rooms-list');
+                roomsList.innerHTML = '';
+                roomsData.forEach(r => {
+                    const li = document.createElement('li');
+                    li.textContent = `Habitación ${r.numero} (${r.tipo}) - $${r.precio}`;
+                    roomsList.appendChild(li);
+                });
                 
-                // 2. Buscar una reserva activa para este cliente.
-                const reservationQuery = await db.collection('reservas').where('clienteId', '==', userDocId).limit(1).get();
-                 if (reservationQuery.empty) {
+                // Renderizar Reservas
+                const reservationsList = document.getElementById('reservations-list');
+                reservationsList.innerHTML = '';
+                reservationsSnap.docs.forEach(doc => {
+                    const r = doc.data();
+                    const client = clientsData.find(c => c.id === r.clienteId);
+                    const room = roomsData.find(h => h.id === r.habitacionId);
+                    const li = document.createElement('li');
+                    li.textContent = `Reserva de ${client ? client.nombre : 'N/A'} en Hab. ${room ? room.numero : 'N/A'}`;
+                    reservationsList.appendChild(li);
+                });
+
+            }).catch(err => console.error("Error cargando datos de admin:", err));
+        }
+
+        // --- LÓGICA DE HUÉSPED ---
+        async function findUserRoom(user, userProfile) {
+            if (!userProfile) {
+                showError("No se encontró tu perfil de cliente.");
+                return;
+            }
+            try {
+                const reservationQuery = await db.collection('reservas').where('clienteId', '==', userProfile.id).limit(1).get();
+                if (reservationQuery.empty) {
                     showError("No tienes una reserva activa.");
                     return;
                 }
                 const habitacionId = reservationQuery.docs[0].data().habitacionId;
-
-                // 3. Iniciar el panel de control para la habitación encontrada.
                 setupRoomControls(habitacionId);
-
             } catch (error) {
-                console.error("Error al buscar la habitación del usuario:", error);
                 showError("Error al cargar los datos de tu habitación.");
             }
         }
 
         function setupRoomControls(roomId) {
             const roomRef = db.collection('habitaciones').doc(roomId);
-
-            // Escuchar cambios en tiempo real en la habitación
             roomRef.onSnapshot(doc => {
-                if (!doc.exists) {
-                    showError("La habitación asignada no existe.");
-                    return;
-                }
-                const data = doc.data();
-                updateUI(data);
+                if (!doc.exists) { showError("La habitación asignada no existe."); return; }
+                updateGuestUI(doc.data());
             });
 
-            // Añadir listeners a los controles
             document.getElementById('door-btn').addEventListener('click', () => {
-                const doorStatus = document.getElementById('door-status');
-                doorStatus.textContent = "Desbloqueando...";
                 roomRef.update({ puerta: 'abierta' }).then(() => {
-                    doorStatus.textContent = "Puerta Abierta. Se bloqueará en 5s.";
                     setTimeout(() => roomRef.update({ puerta: 'cerrada' }), 5000);
                 });
             });
-
             document.getElementById('light-switch').addEventListener('change', e => roomRef.update({ 'control.luz': e.target.checked }));
             document.getElementById('curtain-switch').addEventListener('change', e => roomRef.update({ 'control.cortinas': e.target.checked }));
             document.getElementById('ac-switch').addEventListener('change', e => roomRef.update({ 'control.ac_on': e.target.checked }));
         }
 
-        function updateUI(data) {
-            document.getElementById('room-number-header').textContent = `Habitación ${data.numero || ''}`;
+        function updateGuestUI(data) {
+            document.getElementById('room-number-header').textContent = \`Habitación ${data.numero || ''}\`;
             document.getElementById('room-type-header').textContent = data.tipo || 'Estándar';
-            
-            // Estado de la puerta
-            document.getElementById('door-status').textContent = data.puerta === 'abierta' ? 'Puerta Abierta' : 'Bloqueada';
+            document.getElementById('door-status').textContent = data.puerta === 'abierta' ? 'Puerta Abierta (se bloqueará pronto)' : 'Bloqueada';
 
-            // Controles (usamos un objeto 'control' para no colisionar con otros campos)
             const controls = data.control || {};
-
-            // Luz
             const isLightOn = controls.luz === true;
             document.getElementById('light-switch').checked = isLightOn;
             document.getElementById('light-status').textContent = isLightOn ? 'Encendida' : 'Apagada';
 
-            // Cortinas
             const areCurtainsOpen = controls.cortinas === true;
             document.getElementById('curtain-switch').checked = areCurtainsOpen;
             document.getElementById('curtain-status').textContent = areCurtainsOpen ? 'Abiertas' : 'Cerradas';
 
-            // Aire Acondicionado
             const isAcOn = controls.ac_on === true;
             document.getElementById('ac-switch').checked = isAcOn;
             document.getElementById('ac-status').textContent = isAcOn ? 'Encendido' : 'Apagado';
-            document.getElementById('ac-temp').textContent = `${controls.ac_temp || 22}°C`;
+            document.getElementById('ac-temp').textContent = \`\${controls.ac_temp || 22}°C\`;
         }
 
         function showError(message) {
-            document.getElementById('room-info').innerHTML = `<p style="color: #ff4d4d;">${message}</p>`;
+            const guestDashboard = document.getElementById('guest-dashboard');
+            guestDashboard.innerHTML = \`<div id="room-info"><p style="color: #ff4d4d; font-size: 1.2rem;">\${message}</p></div>\`;
         }
+
+        document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
     </script>
 </body>
 </html>
