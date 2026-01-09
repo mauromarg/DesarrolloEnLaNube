@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,407 +5,178 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AppCheckIn</title>
     <style>
-        :root {
-            --background-dark: #121212;
-            --surface-dark: #1e1e1e;
-            --primary-accent: #008cff;
-            --text-primary: #ffffff;
-            --text-secondary: #b3b3b3;
-            --border-color: rgba(255, 255, 255, 0.1);
-            --success-color: #28a745;
-            --danger-color: #c82333;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            background-color: var(--background-dark);
-            color: var(--text-primary);
-            overflow-x: hidden;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 40px;
-            background: var(--surface-dark);
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        h1, h2 {
-            margin: 0;
-            color: var(--text-primary);
-        }
-
-        h1 { font-size: 1.5rem; }
-        h2 { font-size: 1.2rem; margin-bottom: 20px; }
-
-        #user-info {
-            text-align: right;
-        }
-
-        #user-email, #user-role {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin: 0 0 5px 0;
-        }
-
-        .main-container { padding: 30px 40px; }
-
-        .content-box, .control-card, .status-view {
-            background: var(--surface-dark);
-            padding: 25px;
-            border-radius: 15px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-            text-align: center;
-        }
-        
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-        }
-
-        #guest-dashboard #room-info h1 {
-            font-size: 2rem;
-            color: var(--primary-accent);
-        }
-        #guest-dashboard #room-info p {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-        }
-        .control-card {
-            display: flex;
-            flex-direction: column;
-        }
-        .control-card .status {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            margin-top: 10px;
-        }
-        .control-card .main-action {
-             flex-grow: 1;
-             display: flex;
-             align-items: center;
-             justify-content: center;
-        }
-        .ac-temperature { font-size: 2.5rem; font-weight: 600; }
-        
-        .btn {
-            background-color: var(--primary-accent);
-            color: white; padding: 12px 20px; border: none;
-            border-radius: 8px; cursor: pointer; width: 100%;
-            font-size: 1rem; font-weight: 600;
-            transition: background-color 0.3s, transform 0.1s;
-        }
-        .btn:hover { background-color: #0073d1; }
-        .btn:active { transform: scale(0.98); }
-        .btn-success { background-color: var(--success-color); }
-        .btn-success:hover { background-color: #218838; }
+        :root { --background-dark: #121212; --surface-dark: #1e1e1e; --primary-accent: #008cff; --text-primary: #ffffff; --text-secondary: #b3b3b3; --border-color: rgba(255, 255, 255, 0.1); --success-color: #28a745; --danger-color: #c82333; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; background-color: var(--background-dark); color: var(--text-primary); }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; background: var(--surface-dark); border-bottom: 1px solid var(--border-color); }
+        h1, h2 { color: var(--text-primary); }
+        .main-container { padding: 30px 40px; max-width: 900px; margin: 0 auto; }
+        .status-view, .control-card { background: var(--surface-dark); padding: 25px; border-radius: 15px; border: 1px solid var(--border-color); text-align: center; }
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 25px; }
+        .btn { background-color: var(--primary-accent); color: white; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; }
         .btn-danger { background-color: var(--danger-color); }
-        .btn-danger:hover { background-color: #a81d2a; }
-
-        #admin-dashboard ul, #available-rooms-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        #admin-dashboard li, .room-item {
-            background: rgba(255, 255, 255, 0.05);
-            margin-bottom: 10px;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            font-size: 1.1rem;
-            text-align: left;
-        }
-        .room-item {
-             display: flex;
-             justify-content: space-between;
-             align-items: center;
-        }
-       .reserve-btn {
-            width: auto;
-            padding: 10px 20px;
-       }
-       #checkout-btn {
-           margin-top: 30px;
-       }
-
-        #logout-btn {
-            background-color: #c82333; color: white; padding: 10px 15px;
-            border: none; border-radius: 8px; cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        #logout-btn:hover { background-color: #a81d2a; }
-        .switch {
-            position: relative; display: inline-block;
-            width: 60px; height: 34px;
-        }
+        .btn-success { background-color: var(--success-color); }
+        #available-rooms-list { list-style: none; padding: 0; }
+        .room-item { background: rgba(255, 255, 255, 0.05); margin-bottom: 15px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); }
+        .room-item-header { display: flex; justify-content: space-between; align-items: center; padding: 15px; cursor: pointer; }
+        .room-details { display: none; padding: 15px; border-top: 1px solid var(--border-color); }
+        .room-image-gallery { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; }
+        .room-image-gallery img { width: 120px; height: 80px; object-fit: cover; border-radius: 8px; }
+        .checkout-container { text-align: center; margin-top: 40px; }
+        .hidden { display: none; }
+        .switch { position: relative; display: inline-block; width: 60px; height: 34px; }
         .switch input { display: none; }
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #333; transition: .4s; border-radius: 34px;
-        }
-        .slider:before {
-            position: absolute; content: ""; height: 26px; width: 26px;
-            left: 4px; bottom: 4px; background-color: white;
-            transition: .4s; border-radius: 50%;
-        }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--primary-accent); }
         input:checked + .slider:before { transform: translateX(26px); }
-
-        .hidden { display: none; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>AppCheckIn</h1>
-        <div id="user-info">
-            <p id="user-email"></p>
-            <p id="user-role"></p>
-            <button id="logout-btn" class="btn btn-danger">Cerrar Sesión</button>
+    <div id="loading-message" style="text-align: center; padding: 50px;"><h2>Verificando usuario...</h2></div>
+    <div id="client-view" class="hidden">
+        <div class="header">
+            <h1>AppCheckIn</h1>
+            <div><p id="user-email" style="color: var(--text-secondary);"></p><button id="logout-btn" class="btn btn-danger">Cerrar Sesión</button></div>
         </div>
-    </div>
-
-    <div id="guest-dashboard" class="main-container hidden">
-        <!-- Vista para hacer Check-in -->
-        <div id="checkin-view" class="status-view hidden">
-            <h2>¡Tu habitación está lista!</h2>
-            <p>Has reservado la <strong id="checkin-room-number"></strong>.</p>
-            <p>Pulsa el botón para confirmar tu llegada y activar los controles de la habitación.</p>
-            <button id="checkin-btn" class="btn btn-success">Hacer Check-In</button>
-        </div>
-        
-        <!-- Vista de controles de la habitación -->
-        <div id="room-view" class="hidden">
-            <div id="room-info" style="text-align:center; margin-bottom: 30px;">
-                <h1 id="room-number-header"></h1>
-                <p id="room-type-header"></p>
+        <div class="main-container">
+            <div id="reservation-view" class="status-view hidden"><h2>¡Bienvenido!</h2><p>Haz clic en una habitación para ver las fotos y reservarla.</p><ul id="available-rooms-list"></ul></div>
+            <div id="checkin-view" class="status-view hidden"><h2>¡Tu habitación está lista!</h2><p>Has reservado la <strong id="checkin-room-number"></strong>.</p><button id="checkin-btn" class="btn btn-success">Hacer Check-In</button></div>
+            <div id="room-view" class="hidden">
+                <div style="text-align:center; margin-bottom: 30px;"><h1 id="room-number-header"></h1></div>
+                <div class="grid-container">
+                    <div class="control-card"><h2>Puerta</h2><button id="door-btn" class="btn">Desbloquear</button></div>
+                    <div class="control-card"><h2>Luces</h2><label class="switch"><input type="checkbox" id="light-switch"><span class="slider"></span></label></div>
+                    <div class="control-card"><h2>Cortinas</h2><label class="switch"><input type="checkbox" id="curtain-switch"><span class="slider"></span></label></div>
+                    <div class="control-card"><h2>AC</h2><label class="switch"><input type="checkbox" id="ac-switch"><span class="slider"></span></label></div>
+                </div>
+                <div class="checkout-container"><button id="checkout-btn" class="btn btn-danger">Hacer Check-Out</button></div>
             </div>
-            <div id="room-controls-grid" class="grid-container">
-                <div class="control-card"><h2>Acceso Puerta</h2><div class="main-action"><button id="door-btn" class="btn">Desbloquear</button></div><p id="door-status" class="status">Pulsa para abrir</p></div>
-                <div class="control-card"><h2>Iluminación</h2><div class="main-action"><label class="switch"><input type="checkbox" id="light-switch"><span class="slider"></span></label></div><p id="light-status" class="status">Apagada</p></div>
-                <div class="control-card"><h2>Cortinas</h2><div class="main-action"><label class="switch"><input type="checkbox" id="curtain-switch"><span class="slider"></span></label></div><p id="curtain-status" class="status">Cerradas</p></div>
-                <div class="control-card"><h2>Climatización</h2><div class="main-action" style="flex-direction: column;"><p class="ac-temperature" id="ac-temp">22°C</p><label class="switch"><input type="checkbox" id="ac-switch"><span class="slider"></span></label></div><p id="ac-status" class="status">Apagado</p></div>
-            </div>
-             <button id="checkout-btn" class="btn btn-danger">Hacer Check-Out</button>
-        </div>
-
-        <!-- Vista para reservar habitación -->
-        <div id="reservation-view" class="status-view hidden">
-             <h2>¡Bienvenido!</h2>
-             <p>Aún no tienes una habitación. Elige una de las disponibles para continuar.</p>
-             <ul id="available-rooms-list"></ul>
         </div>
     </div>
-
-    <div id="admin-dashboard" class="main-container hidden">
-        <div class="grid-container">
-            <div class="content-box"><h2>Habitaciones</h2><ul id="rooms-list"><p>Cargando...</p></ul></div>
-            <div class="content-box"><h2>Reservas</h2><ul id="reservations-list"><p>Cargando...</p></ul></div>
-            <div class="content-box"><h2>Clientes</h2><ul id="clients-list"><p>Cargando...</p></ul></div>
-        </div>
-    </div>
-    
-    <div id="loading-message" class="main-container" style="text-align: center;"><h2>Verificando usuario...</h2></div>
-    <div id="error-message" class="main-container hidden" style="text-align: center;"></div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
     <script>
-        const firebaseConfig = {
-          apiKey: "AIzaSyBJkV7des2EtFX6EHJLUyzHJIvG7P86zGE",
-          authDomain: "desarrolloenlanube-34667-816f5.firebaseapp.com",
-          databaseURL: "https://desarrolloenlanube-34667-816f5-default-rtdb.firebaseio.com",
-          projectId: "desarrolloenlanube-34667-816f5",
-          storageBucket: "desarrolloenlanube-34667-816f5.appspot.com",
-          messagingSenderId: "438315579198",
-          appId: "1:438315579198:web:51bcb77a9789c1981ade6f"
-        };
-
+        const firebaseConfig = { apiKey: "AIzaSyBJkV7des2EtFX6EHJLUyzHJIvG7P86zGE", authDomain: "desarrolloenlanube-34667-816f5.firebaseapp.com", projectId: "desarrolloenlanube-34667-816f5", storageBucket: "desarrolloenlanube-34667-816f5.appspot.com", messagingSenderId: "438315579198", appId: "1:438315579198:web:51bcb77a9789c1981ade6f" };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
-
         let currentUserProfile = null;
-        let currentReservationListener = null;
 
-        auth.onAuthStateChanged(async user => {
-            try {
-                document.getElementById('loading-message').classList.remove('hidden');
-                ['guest-dashboard', 'admin-dashboard', 'error-message'].forEach(id => document.getElementById(id).classList.add('hidden'));
+        const placeholderImages = [
+            "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=800&auto=format&fit=crop",
+            "https://images.unsplash.com/photo-1582573648435-15e3d7497298?q=80&w=800&auto=format&fit=crop",
+            "https://images.unsplash.com/photo-1593359677879-a4bb92f82d7f?q=80&w=800&auto=format&fit=crop",
+            "https://images.unsplash.com/photo-1559599238-308793637427?q=80&w=800&auto=format&fit=crop",
+            "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=800&auto=format&fit=crop"
+        ];
 
-                if (user) {
-                    document.getElementById('user-email').textContent = user.email;
-                    currentUserProfile = await getUserProfile(user);
-
-                    if (!currentUserProfile) {
-                        showError("Perfil Incompleto", "Tu cuenta se ha creado, pero falta configurar tu perfil. Contacta con recepción.");
-                        return;
-                    }
-
-                    document.getElementById('user-role').textContent = `Rol: ${currentUserProfile.rol || 'cliente'}`;
-                    
-                    if (currentUserProfile.rol === 'admin') {
-                        document.getElementById('admin-dashboard').classList.remove('hidden');
-                        loadAdminData();
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                db.collection('usuarios').doc(user.uid).get().then(doc => {
+                    document.getElementById('loading-message').classList.add('hidden');
+                    if (doc.exists && doc.data().rol === 'admin') {
+                        window.location.href = '/admin.html';
                     } else {
-                        document.getElementById('guest-dashboard').classList.remove('hidden');
-                        listenForUserReservation();
+                        currentUserProfile = { id: doc.id, ...doc.data() };
+                        document.getElementById('user-email').textContent = user.email;
+                        document.getElementById('client-view').classList.remove('hidden');
+                        setupClientDashboard();
+                        setupClientEventListeners();
                     }
-                } else {
-                    window.location.href = '/login.html';
-                }
-            } catch (error) {
-                console.error("Error during auth state change:", error);
-                showError(`Error de Inicialización: ${error.message}`, "No se pudo cargar tu perfil. Por favor, recarga la página.");
-            } finally {
-                document.getElementById('loading-message').classList.add('hidden');
-            }
+                });
+            } else { window.location.href = '/login.html'; }
         });
         
-        async function getUserProfile(user) {
-            const userDoc = await db.collection('usuarios').doc(user.uid).get();
-            if (userDoc.exists) {
-                return { id: userDoc.id, ...userDoc.data() };
-            } else {
-                // Fallback for older users, not strictly necessary with new register flow
-                const userQuery = await db.collection('usuarios').where('email', '==', user.email).limit(1).get();
-                if (!userQuery.empty) {
-                    const doc = userQuery.docs[0];
-                    return { id: doc.id, ...doc.data() };
+        function setupClientEventListeners() {
+            document.getElementById('available-rooms-list').addEventListener('click', (e) => {
+                const header = e.target.closest('.room-item-header');
+                if (!header) return;
+
+                const details = header.nextElementSibling;
+                if (details && details.classList.contains('room-details')) {
+                     details.style.display = details.style.display === 'block' ? 'none' : 'block';
                 }
-            }
-            return null;
+            });
         }
 
-        function listenForUserReservation() {
-            if (currentReservationListener) currentReservationListener();
-            
-            currentReservationListener = db.collection('reservas')
-                .where('clienteId', '==', currentUserProfile.id)
-                .where('estado', 'in', ['reservada', 'activa'])
-                .onSnapshot(snapshot => {
-                    ['reservation-view', 'checkin-view', 'room-view'].forEach(id => document.getElementById(id).classList.add('hidden'));
+        function setupClientDashboard() {
+            db.collection('reservas').where('clienteId', '==', currentUserProfile.id).where('estado', 'in', ['reservada', 'activa']).onSnapshot(snap => {
+                ['reservation-view', 'checkin-view', 'room-view'].forEach(id => document.getElementById(id).classList.add('hidden'));
+                if (snap.empty) {
+                    document.getElementById('reservation-view').classList.remove('hidden');
+                    loadAvailableRooms();
+                } else {
+                    const res = { id: snap.docs[0].id, ...snap.docs[0].data() };
+                    db.collection('habitaciones').doc(res.habitacionId).get().then(roomDoc => {
+                       const room = { id: roomDoc.id, ...roomDoc.data() };
+                       if (res.estado === 'reservada') {
+                            document.getElementById('checkin-room-number').textContent = `Nº ${room.numero}`;
+                            document.getElementById('checkin-view').classList.remove('hidden');
+                            document.getElementById('checkin-btn').onclick = () => db.collection('reservas').doc(res.id).update({ estado: 'activa' });
+                       } else if (res.estado === 'activa') {
+                            document.getElementById('room-number-header').textContent = `Habitación ${room.numero}`;
+                            document.getElementById('room-view').classList.remove('hidden');
+                            setupRoomControls(room.id, room);
+                       }
+                    });
+                }
+            });
+        }
 
-                    if (snapshot.empty) {
-                        document.getElementById('reservation-view').classList.remove('hidden');
-                        loadAvailableRooms();
-                    } else {
-                        const reservation = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
-                        if (reservation.estado === 'reservada') {
-                            displayCheckinView(reservation);
-                        } else { // activa
-                            displayRoomView(reservation);
-                        }
+        function loadAvailableRooms() {
+            db.collection('habitaciones').get().then(roomsSnap => {
+                db.collection('reservas').where('estado', 'in', ['reservada', 'activa']).get().then(resSnap => {
+                    const reservedIds = resSnap.docs.map(doc => doc.data().habitacionId);
+                    const available = roomsSnap.docs.filter(doc => !reservedIds.includes(doc.id));
+                    const list = document.getElementById('available-rooms-list');
+                    if (available.length === 0) {
+                        list.innerHTML = '<li>No hay habitaciones disponibles en este momento.</li>';
+                        return;
                     }
-                }, error => {
-                    console.error("Error listening to reservations:", error);
-                    showError("Error de Conexión", "No se pudo sincronizar el estado de tu reserva.");
+                    list.innerHTML = available.map(doc => {
+                        const room = { id: doc.id, ...doc.data() };
+                        const imageGalleryHTML = `<div class="room-image-gallery">${placeholderImages.map(img => `<img src="${img}" alt="Foto de la habitación">`).join('')}</div>`;
+                        return `<li class="room-item">
+                                    <div class="room-item-header">
+                                        <span>${room.numero} (${room.tipo}) - $${room.precio}/noche</span>
+                                        <button class="btn" onclick="createReservation(event, '${room.id}')">Reservar</button>
+                                    </div>
+                                    <div class="room-details">${imageGalleryHTML}</div>
+                                </li>`;
+                    }).join('');
                 });
+            });
         }
-        
-        async function loadAvailableRooms() {
-            const roomsList = document.getElementById('available-rooms-list');
-            roomsList.innerHTML = '<p>Buscando habitaciones...</p>';
-            try {
-                const activeReservations = await db.collection('reservas').where('estado', 'in', ['reservada', 'activa']).get();
-                const reservedRoomIds = activeReservations.docs.map(doc => doc.data().habitacionId);
 
-                const roomsSnap = await db.collection('habitaciones').get();
-                const availableRooms = roomsSnap.docs.filter(doc => !reservedRoomIds.includes(doc.id));
-
-                if (availableRooms.length === 0) {
-                    roomsList.innerHTML = '<p>Lo sentimos, no hay habitaciones disponibles.</p>';
-                    return;
-                }
-
-                roomsList.innerHTML = availableRooms.map(doc => {
-                    const room = { id: doc.id, ...doc.data() };
-                    return `<li class="room-item"><span>Habitación ${room.numero} (${room.tipo}) - $${room.precio}/noche</span><button class="btn reserve-btn" data-room-id="${room.id}">Reservar</button></li>`;
-                }).join('');
-
-                document.querySelectorAll('.reserve-btn').forEach(button => {
-                    button.onclick = (e) => createReservation(e.target.dataset.roomId);
-                });
-            } catch (error) {
-                console.error("Error loading available rooms:", error);
-                roomsList.innerHTML = '<p>Error al cargar las habitaciones.</p>';
+        function createReservation(event, roomId) {
+            event.stopPropagation();
+            if (confirm("¿Confirmas la reserva de esta habitación?")) {
+                 db.collection('reservas').add({ clienteId: currentUserProfile.id, habitacionId: roomId, estado: 'reservada', fecha: new Date() });
             }
         }
 
-        async function createReservation(roomId) {
-            try {
-                await db.collection('reservas').add({
-                    clienteId: currentUserProfile.id,
-                    habitacionId: roomId,
-                    estado: 'reservada',
-                    fecha: new Date()
-                });
-            } catch (error) {
-                console.error("Error creating reservation:", error);
-                alert('Hubo un error al crear tu reserva.');
-            }
-        }
-
-        async function displayCheckinView(reservation) {
-            const roomSnap = await db.collection('habitaciones').doc(reservation.habitacionId).get();
-            const room = roomSnap.data();
-            document.getElementById('checkin-room-number').textContent = `Habitación ${room.numero} (${room.tipo})`;
-            document.getElementById('checkin-view').classList.remove('hidden');
-            document.getElementById('checkin-btn').onclick = () => handleCheckIn(reservation.id);
-        }
-        
-        function displayRoomView(reservation) {
-            document.getElementById('room-view').classList.remove('hidden');
-            setupRoomControls(reservation.habitacionId);
-            document.getElementById('checkout-btn').onclick = () => handleCheckOut(reservation.id);
-        }
-
-        async function handleCheckIn(reservationId) {
-            await db.collection('reservas').doc(reservationId).update({ estado: 'activa' });
-        }
-        
-        async function handleCheckOut(reservationId) {
-            if (confirm("¿Estás seguro de que quieres finalizar tu estancia y hacer el check-out?")) {
-                 await db.collection('reservas').doc(reservationId).update({ estado: 'finalizada' });
-            }
-        }
-        
-        function setupRoomControls(roomId) {
+        function setupRoomControls(roomId, roomData) {
             const roomRef = db.collection('habitaciones').doc(roomId);
             roomRef.onSnapshot(doc => {
-                if (doc.exists) updateGuestUI(doc.data());
+                const data = doc.data().control || {};
+                ['light', 'curtain', 'ac'].forEach(key => { document.getElementById(`${key}-switch`).checked = !!data[key]; });
             });
-            document.getElementById('door-btn').onclick = () => roomRef.update({ puerta: 'abierta' }).then(() => setTimeout(() => roomRef.update({ puerta: 'cerrada' }), 5000));
-            document.getElementById('light-switch').onchange = e => roomRef.update({ 'control.luz': e.target.checked });
-            document.getElementById('curtain-switch').onchange = e => roomRef.update({ 'control.cortinas': e.target.checked });
-            document.getElementById('ac-switch').onchange = e => roomRef.update({ 'control.ac_on': e.target.checked });
+
+            document.getElementById('door-btn').onclick = () => roomRef.update({ 'control.puerta': 'abriendo' }).then(() => setTimeout(() => roomRef.update({ 'control.puerta': 'cerrada' }), 2000));
+            ['light', 'curtain', 'ac'].forEach(key => {
+                document.getElementById(`${key}-switch`).onchange = e => roomRef.update({ [`control.${key}`]: e.target.checked });
+            });
+            document.getElementById('checkout-btn').onclick = () => {
+                if(confirm("¿Seguro que quieres hacer check-out?")) {
+                    db.collection('reservas').where('habitacionId', '==', roomId).where('estado', '==', 'activa').get().then(snap => {
+                        snap.forEach(doc => db.collection('reservas').doc(doc.id).update({ estado: 'finalizada' }));
+                    });
+                }
+            }
         }
 
-        function updateGuestUI(data) {
-            document.getElementById('room-number-header').textContent = `Habitación ${data.numero || ''}`;
-            document.getElementById('room-type-header').textContent = data.tipo || 'Estándar';
-            document.getElementById('door-status').textContent = data.puerta === 'abierta' ? 'Abierta (se bloqueará pronto)' : 'Bloqueada';
-            const ctr = data.control || {};
-            document.getElementById('light-switch').checked = !!ctr.luz; document.getElementById('light-status').textContent = ctr.luz ? 'Encendida' : 'Apagada';
-            document.getElementById('curtain-switch').checked = !!ctr.cortinas; document.getElementById('curtain-status').textContent = ctr.cortinas ? 'Abiertas' : 'Cerradas';
-            document.getElementById('ac-switch').checked = !!ctr.ac_on; document.getElementById('ac-status').textContent = ctr.ac_on ? 'Encendido' : 'Apagado';
-            document.getElementById('ac-temp').textContent = `${ctr.ac_temp || 22}°C`;
-        }
-
-        function showError(title, message) {
-            const errorDiv = document.getElementById('error-message');
-            errorDiv.innerHTML = `<h2 style="color: var(--danger-color);">${title}</h2><p>${message}</p>`;
-            errorDiv.classList.remove('hidden');
-        }
-
-        function loadAdminData() { /* ... Lógica de administrador sin cambios ... */ }
         document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
     </script>
 </body>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administrador - AppCheckIn</title>
+    <style>
+        :root { --background-dark: #121212; --surface-dark: #1e1e1e; --primary-accent: #008cff; --text-primary: #ffffff; --text-secondary: #b3b3b3; --border-color: rgba(255, 255, 255, 0.1); }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; background-color: var(--background-dark); color: var(--text-primary); }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; background: var(--surface-dark); border-bottom: 1px solid var(--border-color); }
+        .header h1 { color: var(--primary-accent); margin: 0; }
+        .header .user-info { display: flex; align-items: center; gap: 20px; }
+        #user-email { color: var(--text-secondary); }
+        #logout-btn { background-color: #c82333; color: white; padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; }
+        .container { display: grid; grid-template-columns: 1fr 2fr; gap: 30px; padding: 30px 40px; }
+        .content-box { background: var(--surface-dark); padding: 25px; border-radius: 15px; border: 1px solid var(--border-color); }
+        h2 { border-bottom: 1px solid var(--primary-accent); padding-bottom: 10px; margin-top: 0; }
+        .filter-buttons { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .filter-buttons button { background-color: #333; color: white; padding: 10px 15px; border: 1px solid var(--primary-accent); border-radius: 8px; cursor: pointer; }
+        .filter-buttons button.active { background-color: var(--primary-accent); }
+        ul { list-style: none; padding: 0; margin: 0; }
+        .item { background: rgba(255, 255, 255, 0.05); margin-bottom: 10px; padding: 15px; border-radius: 8px; }
+        .room-item-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .room-details { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color); }
+        .room-image-gallery { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; }
+        .room-image-gallery img { width: 120px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Panel de Administrador</h1>
+        <div class="user-info">
+            <span id="user-email">Cargando...</span>
+            <button id="logout-btn">Cerrar Sesión</button>
+        </div>
+    </div>
+    <div class="container">
+        <div class="content-box"><h2>Clientes</h2><ul id="client-list"><li>Cargando...</li></ul></div>
+        <div class="content-box"><h2>Habitaciones</h2>
+            <div class="filter-buttons">
+                <button onclick="filterRooms('all')" class="active">Todas</button>
+                <button onclick="filterRooms('available')">Disponibles</button>
+                <button onclick="filterRooms('reserved')">Reservadas</button>
+                <button onclick="filterRooms('occupied')">Ocupadas</button>
+            </div>
+            <ul id="room-list"><li>Cargando...</li></ul>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyBJkV7des2EtFX6EHJLUyzHJIvG7P86zGE", authDomain: "desarrolloenlanube-34667-816f5.firebaseapp.com", projectId: "desarrolloenlanube-34667-816f5", storageBucket: "desarrolloenlanube-34667-816f5.appspot.com", messagingSenderId: "438315579198", appId: "1:438315579198:web:51bcb77a9789c1981ade6f" };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let allRooms = [], allUsers = [], allReservations = [];
+        let currentFilter = 'all';
+        
+        const placeholderImages = [
+            "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=800&auto=format&fit=crop", // Cama
+            "https://images.unsplash.com/photo-1582573648435-15e3d7497298?q=80&w=800&auto=format&fit=crop", // Baño
+            "https://images.unsplash.com/photo-1593359677879-a4bb92f82d7f?q=80&w=800&auto=format&fit=crop", // TV
+            "https://images.unsplash.com/photo-1559599238-308793637427?q=80&w=800&auto=format&fit=crop", // Balcón
+            "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=800&auto=format&fit=crop"  // Escritorio
+        ];
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('user-email').textContent = user.email;
+                db.collection('usuarios').doc(user.uid).get().then(doc => {
+                    if (!doc.exists || doc.data().rol !== 'admin') {
+                        window.location.href = '/index.html';
+                    } else {
+                        loadInitialData();
+                    }
+                });
+            } else {
+                window.location.href = '/login.html';
+            }
+        });
+
+        function loadInitialData() {
+            db.collection('usuarios').onSnapshot(snap => { allUsers = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderClients(); renderRooms(); });
+            db.collection('habitaciones').onSnapshot(snap => { allRooms = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderRooms(); });
+            db.collection('reservas').onSnapshot(snap => { allReservations = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderRooms(); });
+        }
+
+        function renderClients() {
+            const clientList = document.getElementById('client-list');
+            clientList.innerHTML = allUsers.map(user => `<li class="item">${user.email} (${user.rol || 'cliente'})</li>`).join('') || '<li>No hay clientes.</li>';
+        }
+
+        function renderRooms() {
+            const getRoomStatus = (roomId) => {
+                const res = allReservations.find(r => r.habitacionId === roomId && ['reservada', 'activa'].includes(r.estado));
+                if (!res) return { status: 'available', reservation: null, user: null };
+                const user = allUsers.find(u => u.id === res.clienteId);
+                return { status: res.estado === 'activa' ? 'occupied' : 'reserved', reservation: res, user };
+            };
+
+            const roomList = document.getElementById('room-list');
+            const filteredRooms = allRooms.filter(room => currentFilter === 'all' || getRoomStatus(room.id).status === currentFilter);
+            
+            if (filteredRooms.length === 0) {
+                roomList.innerHTML = '<li>No hay habitaciones que coincidan con el filtro.</li>';
+                return;
+            }
+
+            roomList.innerHTML = filteredRooms.map(room => {
+                const { status, user } = getRoomStatus(room.id);
+                
+                const imageGalleryHTML = `<div class="room-image-gallery">${placeholderImages.map(img => `<img src="${img}" alt="Foto de la habitación">`).join('')}</div>`;
+                
+                let details = '';
+                if (status === 'occupied' || status === 'reserved') {
+                    details = `<p><strong>${status === 'occupied' ? 'Ocupada' : 'Reservada'} por:</strong> ${user ? user.email : 'N/A'}</p>`;
+                }
+
+                return `<li class="item">
+                    <div class="room-item-header" onclick="toggleDetails(this)">
+                        <strong>Habitación ${room.numero} (${room.tipo})</strong>
+                        <span>${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+                    </div>
+                    <div class="room-details">
+                        ${imageGalleryHTML}
+                        ${details}
+                    </div>
+                </li>`;
+            }).join('');
+        }
+
+        function filterRooms(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-buttons button').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.filter-buttons button[onclick="filterRooms('${filter}')"]`).classList.add('active');
+            renderRooms();
+        }
+        
+        function toggleDetails(header) {
+            const details = header.nextElementSibling;
+            if (details && details.classList.contains('room-details')) {
+                 details.style.display = details.style.display === 'block' ? 'none' : 'block';
+            }
+        }
+
+        document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
+    </script>
+</body>
+</html>
