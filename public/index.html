@@ -271,9 +271,18 @@
         });
         
         async function getUserProfile(user) {
-            const userQuery = await db.collection('usuarios').where('email', '==', user.email).limit(1).get();
-            console.log(userQuery);
-            console.log("caca");
+            const userDoc = await db.collection('usuarios').doc(user.uid).get();
+            if (userDoc.exists) {
+                return { id: userDoc.id, ...userDoc.data() };
+            } else {
+                // Fallback for older users, not strictly necessary with new register flow
+                const userQuery = await db.collection('usuarios').where('email', '==', user.email).limit(1).get();
+                if (!userQuery.empty) {
+                    const doc = userQuery.docs[0];
+                    return { id: doc.id, ...doc.data() };
+                }
+            }
+            return null;
         }
 
         function listenForUserReservation() {

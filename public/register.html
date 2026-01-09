@@ -7,7 +7,7 @@
     <title>Registro - AppCheckIn</title>
     <style>
         body {
-            font-family: sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -15,54 +15,102 @@
             overflow: hidden;
             margin: 0;
             background-color: #121212;
+            color: white;
         }
         .register-container {
-            background: rgba(0, 0, 0, 0.5);
+            background: #1e1e1e;
             padding: 40px;
             border-radius: 15px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             text-align: center;
-            width: 380px;
-            color: white;
+            width: 400px;
         }
-        h1 { color: white; margin-bottom: 20px; }
+        h1 { 
+            margin-bottom: 25px; 
+            font-size: 1.8rem;
+        }
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
         input {
-            width: calc(100% - 22px);
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            width: 100%;
+            padding: 14px 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 8px;
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.05);
             color: white;
             font-size: 16px;
+            box-sizing: border-box; /* Important for padding */
+        }
+        .password-visibility-toggle {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #b3b3b3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .password-visibility-toggle input {
+            width: auto;
+            margin-right: 8px;
         }
         .btn {
-            background-color: #0056b3;
+            background-color: #008cff;
             color: white;
-            padding: 12px;
+            padding: 14px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             width: 100%;
             font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s;
         }
-        #error-message { color: #ffcdd2; margin-top: 10px; min-height: 18px; }
+        .btn:hover { background-color: #0073d1; }
+        
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            margin-top: 15px;
+        }
+         .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        #error-message { 
+            color: #ff4d4d;
+            margin-top: 15px; 
+            min-height: 20px;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
     <div class="register-container">
         <h1>Crear Cuenta</h1>
-        <input type="text" id="name" placeholder="Nombre completo" required>
-        <input type="email" id="email" placeholder="Correo electrónico" required>
-        <input type="password" id="password" placeholder="Contraseña (mín. 6 caracteres)" required>
-        <button id="register-btn" class="btn">Crear Cuenta</button>
+        <div class="input-group">
+            <input type="text" id="name" placeholder="Nombre completo" required>
+        </div>
+        <div class="input-group">
+            <input type="email" id="email" placeholder="Correo electrónico" required>
+        </div>
+        <div class="input-group">
+            <input type="password" id="password" placeholder="Contraseña (mín. 6 caracteres)" required>
+        </div>
+        <div class="input-group">
+            <input type="password" id="confirm-password" placeholder="Confirmar contraseña" required>
+        </div>
+        <div class="password-visibility-toggle">
+            <input type="checkbox" id="show-password-checkbox">
+            <label for="show-password-checkbox">Mostrar contraseñas</label>
+        </div>
+        
         <div id="error-message"></div>
-        <p style="margin-top: 20px;">
-            <a href="/login.html" style="color: #ccc; text-decoration: none;">¿Ya tienes una cuenta? Inicia sesión</a>
-        </p>
+
+        <button id="register-btn" class="btn" style="margin-top: 20px;">Crear Cuenta</button>
+        <button onclick="window.location.href='/login.html'" class="btn btn-secondary">Volver al Login</button>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -83,14 +131,29 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
+        
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirm-password');
+        const showPasswordCheckbox = document.getElementById('show-password-checkbox');
         const errorMessage = document.getElementById('error-message');
 
-        document.getElementById('register-btn').addEventListener('click', () => {
-            const name = document.getElementById('name').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+        showPasswordCheckbox.addEventListener('change', () => {
+            const isChecked = showPasswordCheckbox.checked;
+            passwordInput.type = isChecked ? 'text' : 'password';
+            confirmPasswordInput.type = isChecked ? 'text' : 'password';
+        });
 
-            if (!name || !email || !password) {
+        document.getElementById('register-btn').addEventListener('click', () => {
+            const name = nameInput.value;
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+            
+            errorMessage.textContent = ''; // Limpiar errores previos
+
+            if (!name || !email || !password || !confirmPassword) {
                 errorMessage.textContent = 'Por favor, completa todos los campos.';
                 return;
             }
@@ -98,22 +161,37 @@
                 errorMessage.textContent = 'La contraseña debe tener al menos 6 caracteres.';
                 return;
             }
+            if (password !== confirmPassword) {
+                errorMessage.textContent = 'Las contraseñas no coinciden.';
+                return;
+            }
 
             auth.createUserWithEmailAndPassword(email, password)
                 .then(userCredential => {
-                    // Ahora guarda la información adicional en Firestore
                     return db.collection('usuarios').doc(userCredential.user.uid).set({
                         nombre: name,
                         email: email,
-                        rol: 'huesped' 
+                        rol: 'huesped'
                     });
                 })
                 .then(() => {
-                    // Redirige al usuario a la página principal
-                    window.location.href = '/index.html';
+                    // Redirige al usuario a la página de login para que inicie sesión
+                    window.location.href = '/login.html?registration=success';
                 })
                 .catch(error => {
-                    errorMessage.textContent = 'Error: ' + error.message;
+                    switch (error.code) {
+                        case 'auth/email-already-in-use':
+                            errorMessage.textContent = 'Este correo electrónico ya está en uso.';
+                            break;
+                        case 'auth/invalid-email':
+                            errorMessage.textContent = 'El formato del correo es inválido.';
+                            break;
+                        case 'auth/weak-password':
+                             errorMessage.textContent = 'La contraseña es demasiado débil.';
+                             break;
+                        default:
+                            errorMessage.textContent = 'Error: ' + error.message;
+                    }
                 });
         });
     </script>
