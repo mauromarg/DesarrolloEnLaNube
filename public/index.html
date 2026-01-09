@@ -52,7 +52,7 @@
 
         .main-container { padding: 30px 40px; }
 
-        .content-box, .control-card {
+        .content-box, .control-card, #reservation-view {
             background: var(--surface-dark);
             padding: 25px;
             border-radius: 15px;
@@ -104,19 +104,28 @@
         .btn:hover { background-color: #0073d1; }
         .btn:active { transform: scale(0.98); }
 
-        #admin-dashboard ul {
+        #admin-dashboard ul, #available-rooms-list {
             list-style: none;
             padding: 0;
             margin: 0;
         }
-        #admin-dashboard li {
+        #admin-dashboard li, .room-item {
             background: rgba(255, 255, 255, 0.05);
             margin-bottom: 10px;
-            padding: 12px;
+            padding: 15px;
             border-radius: 8px;
             border: 1px solid var(--border-color);
-            font-size: 15px;
+            font-size: 1.1rem;
         }
+        .room-item {
+             display: flex;
+             justify-content: space-between;
+             align-items: center;
+        }
+       .reserve-btn {
+            width: auto;
+            padding: 10px 20px;
+       }
 
         #logout-btn {
             background-color: #c82333; color: white; padding: 10px 15px;
@@ -159,11 +168,15 @@
             <h1 id="room-number-header">Cargando...</h1>
             <p id="room-type-header">Buscando tu habitación...</p>
         </div>
-        <div class="grid-container">
+        <div id="room-controls-grid" class="grid-container">
             <div class="control-card"><h2>Acceso Puerta</h2><div class="main-action"><button id="door-btn" class="btn">Desbloquear</button></div><p id="door-status" class="status">Pulsa para abrir</p></div>
             <div class="control-card"><h2>Iluminación</h2><div class="main-action"><label class="switch"><input type="checkbox" id="light-switch"><span class="slider"></span></label></div><p id="light-status" class="status">Apagada</p></div>
             <div class="control-card"><h2>Cortinas</h2><div class="main-action"><label class="switch"><input type="checkbox" id="curtain-switch"><span class="slider"></span></label></div><p id="curtain-status" class="status">Cerradas</p></div>
             <div class="control-card"><h2>Climatización</h2><div class="main-action" style="flex-direction: column;"><p class="ac-temperature" id="ac-temp">22°C</p><label class="switch"><input type="checkbox" id="ac-switch"><span class="slider"></span></label></div><p id="ac-status" class="status">Apagado</p></div>
+        </div>
+        <div id="reservation-view" class="hidden">
+             <h2>Habitaciones Disponibles</h2>
+             <ul id="available-rooms-list"></ul>
         </div>
     </div>
 
@@ -196,10 +209,16 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        let currentUser = null;
+        let currentUserProfile = null;
+
         auth.onAuthStateChanged(async user => {
             if (user) {
+                currentUser = user;
                 document.getElementById('user-email').textContent = user.email;
+                
                 const userProfile = await getUserProfile(user);
+                currentUserProfile = userProfile;
                 document.getElementById('loading-message').classList.add('hidden');
 
                 if (!userProfile) {
@@ -211,12 +230,14 @@
                 const role = userProfile.rol || 'huesped';
                 document.getElementById('user-role').textContent = `Rol: ${role}`;
 
-                if (role === 'admin' && user.email === 'admin@test.com') {
+                if (role === 'admin') {
                     document.getElementById('admin-dashboard').classList.remove('hidden');
+                    document.getElementById('guest-dashboard').classList.add('hidden');
                     loadAdminData();
                 } else {
                     document.getElementById('guest-dashboard').classList.remove('hidden');
-                    findUserRoom(user, userProfile);
+                    document.getElementById('admin-dashboard').classList.add('hidden');
+                    findUserRoom();
                 }
             } else {
                 window.location.href = '/login.html';
@@ -247,21 +268,72 @@
             }).catch(err => console.error("Error cargando datos de admin:", err));
         }
 
-        async function findUserRoom(user, userProfile) {
+        async function findUserRoom() {
             try {
-                const resQuery = await db.collection('reservas').where('clienteId', '==', userProfile.id).limit(1).get();
+                const resQuery = await db.collection('reservas').where('clienteId', '==', currentUserProfile.id).limit(1).get();
+                
                 if (resQuery.empty) {
-                    document.getElementById('room-number-header').textContent = `¡Bienvenido, ${userProfile.nombre || 'huésped'}!`;
-                    document.getElementById('room-type-header').textContent = 'Tu reserva está siendo procesada. Te asignaremos una habitación en breve.';
-                    document.querySelector('#guest-dashboard .grid-container').classList.add('hidden');
-                    return;
+                    document.getElementById('room-number-header').textContent = `¡Bienvenido, ${currentUserProfile.nombre || 'huésped'}!`;
+                    document.getElementById('room-type-header').textContent = 'Elige una habitación de la lista para continuar.';
+                    document.getElementById('room-controls-grid').classList.add('hidden');
+                    document.getElementById('reservation-view').classList.remove('hidden');
+                    loadAvailableRooms();
+                } else {
+                    document.getElementById('room-controls-grid').classList.remove('hidden');
+                    document.getElementById('reservation-view').classList.add('hidden');
+                    const habitacionId = resQuery.docs[0].data().habitacionId;
+                    setupRoomControls(habitacionId);
                 }
-                const habitacionId = resQuery.docs[0].data().habitacionId;
-                document.querySelector('#guest-dashboard .grid-container').classList.remove('hidden');
-                setupRoomControls(habitacionId);
             } catch (error) {
                 console.error("Error buscando habitación:", error);
                 showError("Error de Carga", "No pudimos cargar los datos de tu habitación.");
+            }
+        }
+
+        async function loadAvailableRooms() {
+            const roomsList = document.getElementById('available-rooms-list');
+            roomsList.innerHTML = '<p>Buscando habitaciones disponibles...</p>';
+            try {
+                const reservationsSnap = await db.collection('reservas').get();
+                const reservedRoomIds = reservationsSnap.docs.map(doc => doc.data().habitacionId);
+                const roomsSnap = await db.collection('habitaciones').get();
+                const availableRooms = roomsSnap.docs.filter(doc => !reservedRoomIds.includes(doc.id));
+
+                if (availableRooms.length === 0) {
+                    roomsList.innerHTML = '<p>Lo sentimos, no hay habitaciones disponibles en este momento.</p>';
+                    return;
+                }
+
+                roomsList.innerHTML = availableRooms.map(doc => {
+                    const room = { id: doc.id, ...doc.data() };
+                    return `<li class="room-item"><span>Habitación ${room.numero} (${room.tipo}) - $${room.precio}/noche</span><button class="btn reserve-btn" data-room-id="${room.id}">Reservar</button></li>`;
+                }).join('');
+
+                document.querySelectorAll('.reserve-btn').forEach(button => {
+                    button.onclick = (event) => {
+                        const roomId = event.target.getAttribute('data-room-id');
+                        createReservation(roomId);
+                    };
+                });
+            } catch (error) {
+                console.error("Error loading available rooms:", error);
+                roomsList.innerHTML = '<p>Error al cargar las habitaciones. Inténtalo de nuevo más tarde.</p>';
+            }
+        }
+
+        async function createReservation(roomId) {
+            try {
+                document.querySelectorAll('.reserve-btn').forEach(button => button.disabled = true);
+                await db.collection('reservas').add({
+                    clienteId: currentUserProfile.id,
+                    habitacionId: roomId,
+                    fecha: new Date()
+                });
+                await findUserRoom();
+            } catch (error) {
+                console.error("Error creating reservation:", error);
+                alert('Hubo un error al crear tu reserva. Por favor, intenta de nuevo.');
+                document.querySelectorAll('.reserve-btn').forEach(button => button.disabled = false);
             }
         }
 
@@ -290,7 +362,8 @@
         function showError(title, message) {
             const roomInfo = document.getElementById('room-info');
             roomInfo.innerHTML = `<h1 style="color: #ff4d4d;">${title}</h1><p>${message}</p>`;
-            document.querySelector('#guest-dashboard .grid-container').classList.add('hidden');
+            document.getElementById('room-controls-grid').classList.add('hidden');
+            document.getElementById('reservation-view').classList.add('hidden');
         }
 
         document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
