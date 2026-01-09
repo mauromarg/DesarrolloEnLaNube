@@ -71,7 +71,7 @@
             width: 100%;
             font-size: 16px;
             font-weight: 600;
-            transition: background-color: 0.3s;
+            transition: background-color 0.3s;
         }
         .btn:hover { background-color: #0073d1; }
         
@@ -95,12 +95,21 @@
 <body>
     <div class="register-container" id="register-container">
         <form id="register-form">
-            <h1>Crear Cuenta</h1>
+            <h1>Crear Cuenta de Huésped</h1>
             <div class="input-group">
                 <input type="text" id="name" placeholder="Nombre completo" required>
             </div>
             <div class="input-group">
                 <input type="email" id="email" placeholder="Correo electrónico" required>
+            </div>
+            <div class="input-group">
+                <input type="tel" id="phone" placeholder="Teléfono" required>
+            </div>
+            <div class="input-group">
+                <input type="text" id="nationality" placeholder="Nacionalidad" required>
+            </div>
+            <div class="input-group">
+                <input type="text" id="documentId" placeholder="DNI o Pasaporte" required>
             </div>
             <div class="input-group">
                 <input type="password" id="password" placeholder="Contraseña (mín. 6 caracteres)" required>
@@ -142,6 +151,9 @@
         const registerForm = document.getElementById('register-form');
         const nameInput = document.getElementById('name');
         const emailInput = document.getElementById('email');
+        const phoneInput = document.getElementById('phone');
+        const nationalityInput = document.getElementById('nationality');
+        const documentIdInput = document.getElementById('documentId');
         const passwordInput = document.getElementById('password');
         const confirmPasswordInput = document.getElementById('confirm-password');
         const showPasswordCheckbox = document.getElementById('show-password-checkbox');
@@ -158,12 +170,15 @@
 
             const name = nameInput.value;
             const email = emailInput.value;
+            const phone = phoneInput.value;
+            const nationality = nationalityInput.value;
+            const documentId = documentIdInput.value;
             const password = passwordInput.value;
             const confirmPassword = confirmPasswordInput.value;
             
             errorMessage.textContent = '';
 
-            if (!name || !email || !password || !confirmPassword) {
+            if (!name || !email || !password || !confirmPassword || !phone || !nationality || !documentId) {
                 errorMessage.textContent = 'Por favor, completa todos los campos.';
                 return;
             }
@@ -185,11 +200,14 @@
                         return db.collection('usuarios').doc(user.uid).set({
                             nombre: name,
                             email: email,
+                            telefono: phone,
+                            nacionalidad: nationality,
+                            documentoId: documentId,
                             rol: 'cliente',
                             emailVerified: false // El estado de verificación inicial es falso
                         });
                     }).then(() => {
-                        // 3. Mostrar mensaje de éxito en lugar de redirigir
+                        // 3. Mostrar mensaje de éxito
                         const container = document.getElementById('register-container');
                         container.innerHTML = `
                             <h1>¡Revisa tu correo!</h1>
