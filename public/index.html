@@ -1,130 +1,152 @@
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>AppCheckIn - Gestión de Hotel (Versión Gratuita)</title>
-        <style>
-            body { font-family: sans-serif; margin: 2em; background-color: #f9f9f9; color: #333; }
-            h1, h2 { color: #0056b3; }
-            .container { display: flex; flex-wrap: wrap; gap: 20px; }
-            .section { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; min-width: 300px;}
-            .section ul { list-style: none; padding: 0; }
-            .section li { background: #f0f0f0; margin-bottom: 10px; padding: 10px; border-radius: 5px; }
-            .form-section { background: #eee; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 20px; opacity: 0.6; }
-            .form-section input, .form-section select, .form-section textarea { width: calc(100% - 22px); padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; }
-            .form-section button { background-color: #999; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: not-allowed; }
-        </style>
-    </head>
-    <body>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AppCheckIn - Gestión de Hotel (Versión Gratuita)</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; background-color: #f9f9f9; color: #333; }
+        h1, h2 { color: #0056b3; }
+        .header { display: flex; justify-content: space-between; align-items: center; }
+        .container { display: flex; flex-wrap: wrap; gap: 20px; }
+        .section { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; min-width: 300px;}
+        .section ul { list-style: none; padding: 0; }
+        .section li { background: #f0f0f0; margin-bottom: 10px; padding: 10px; border-radius: 5px; }
+        .form-section { background: #eee; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 20px; opacity: 0.6; }
+        .form-section input, .form-section select, .form-section textarea { width: calc(100% - 22px); padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .form-section button { background-color: #999; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: not-allowed; }
+        #logout-btn { background-color: #dc3545; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
 
+    <div class="header">
         <h1>Bienvenido a AppCheckIn (Versión Gratuita)</h1>
+        <button id="logout-btn">Cerrar Sesión</button>
+    </div>
 
-        <div class="container">
-            <div id="rooms-section" class="section">
-                <h2>Habitaciones</h2>
-                <ul id="rooms-list"><p>Cargando habitaciones...</p></ul>
-            </div>
-
-            <div id="reservations-section" class="section">
-                <h2>Reservas</h2>
-                <ul id="reservations-list"><p>Cargando reservas...</p></ul>
-            </div>
-
-            <div id="clients-section" class="section">
-                <h2>Clientes</h2>
-                <ul id="clients-list"><p>Cargando clientes...</p></ul>
-            </div>
+    <div class="container">
+        <div id="rooms-section" class="section">
+            <h2>Habitaciones</h2>
+            <ul id="rooms-list"><p>Cargando habitaciones...</p></ul>
         </div>
 
-        <div id="reservation-form-section" class="form-section">
-            <h2>Crear Nueva Reserva (Deshabilitado en modo gratuito)</h2>
-            <p>Para mantener la aplicación 100% gratuita y segura, la creación de nuevas reservas debe hacerse directamente en la consola de Firebase.</p>
-            <form id="reservation-form">
-                <select id="client-id" required disabled><option value="">Seleccione un cliente</option></select>
-                <input type="date" id="start-date" required disabled>
-                <input type="date" id="end-date" required disabled>
-                <select id="room-id" required disabled><option value="">Seleccione fechas para ver habitaciones</option></select>
-                <button type="submit" disabled>Crear Reserva</button>
-            </form>
+        <div id="reservations-section" class="section">
+            <h2>Reservas</h2>
+            <ul id="reservations-list"><p>Cargando reservas...</p></ul>
         </div>
 
-        <!-- SDK de Firebase -->
-        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+        <div id="clients-section" class="section">
+            <h2>Clientes</h2>
+            <ul id="clients-list"><p>Cargando clientes...</p></ul>
+        </div>
+    </div>
 
-        <script>
-            const firebaseConfig = {
-              apiKey: "AIzaSyBJkV7des2EtFX6EHJLUyzHJIvG7P86zGE",
-              authDomain: "desarrolloenlanube-34667-816f5.firebaseapp.com",
-              databaseURL: "https://desarrolloenlanube-34667-816f5-default-rtdb.firebaseio.com",
-              projectId: "desarrolloenlanube-34667-816f5",
-              storageBucket: "desarrolloenlanube-34667-816f5.firebasestorage.app",
-              messagingSenderId: "438315579198",
-              appId: "1:438315579198:web:51bcb77a9789c1981ade6f"
-            };
+    <div id="reservation-form-section" class="form-section">
+        <h2>Crear Nueva Reserva (Deshabilitado en modo gratuito)</h2>
+        <p>Para mantener la aplicación 100% gratuita y segura, la creación de nuevas reservas debe hacerse directamente en la consola de Firebase.</p>
+        <form id="reservation-form">
+            <select id="client-id" required disabled><option value="">Seleccione un cliente</option></select>
+            <input type="date" id="start-date" required disabled>
+            <input type="date" id="end-date" required disabled>
+            <select id="room-id" required disabled><option value="">Seleccione fechas para ver habitaciones</option></select>
+            <button type="submit" disabled>Crear Reserva</button>
+        </form>
+    </div>
 
-            // Inicializar Firebase
-            firebase.initializeApp(firebaseConfig);
-            const db = firebase.firestore();
+    <!-- SDK de Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-            document.addEventListener('DOMContentLoaded', () => {
-                const roomsList = document.getElementById('rooms-list');
-                const reservationsList = document.getElementById('reservations-list');
-                const clientsList = document.getElementById('clients-list');
-                
-                const loadClients = db.collection('usuarios').get();
-                const loadRooms = db.collection('habitaciones').get();
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyBJkV7des2EtFX6EHJLUyzHJIvG7P86zGE",
+          authDomain: "desarrolloenlanube-34667-816f5.firebaseapp.com",
+          databaseURL: "https://desarrolloenlanube-34667-816f5-default-rtdb.firebaseio.com",
+          projectId: "desarrolloenlanube-34667-816f5",
+          storageBucket: "desarrolloenlanube-34667-816f5.firebasestorage.app",
+          messagingSenderId: "438315579198",
+          appId: "1:438315579198:web:51bcb77a9789c1981ade6f"
+        };
 
-                Promise.all([loadClients, loadRooms]).then(([clientsSnapshot, roomsSnapshot]) => {
-                    const clientsData = clientsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    const roomsData = roomsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-                    // Populate clients list
-                    clientsList.innerHTML = '';
-                    clientsData.forEach(client => {
-                        const li = document.createElement('li');
-                        li.textContent = `${client.nombre} (${client.email})`;
-                        clientsList.appendChild(li);
-                    });
+        // Proteger la página
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // El usuario ha iniciado sesión, cargar datos
+                loadData();
+            } else {
+                // El usuario no ha iniciado sesión, redirigir a login.html
+                window.location.href = '/login.html';
+            }
+        });
+        
+        // Cerrar sesión
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            auth.signOut();
+        });
 
-                    // Populate rooms list
-                    roomsList.innerHTML = '';
-                    roomsData.forEach(room => {
-                        const li = document.createElement('li');
-                        li.textContent = `Habitación ${room.numero} (${room.tipo}) - $${room.precio}`;
-                        roomsList.appendChild(li);
-                    });
+        function loadData() {
+            const roomsList = document.getElementById('rooms-list');
+            const reservationsList = document.getElementById('reservations-list');
+            const clientsList = document.getElementById('clients-list');
+            
+            const loadClients = db.collection('usuarios').get();
+            const loadRooms = db.collection('habitaciones').get();
 
-                    // Now that clients and rooms are loaded, load reservations
-                    return db.collection('reservas').get().then(reservasSnapshot => {
-                        reservationsList.innerHTML = '';
-                        reservasSnapshot.docs.forEach(doc => {
-                            const reserva = doc.data();
-                            // Firestore guarda Timestamps, necesitamos convertirlos a Date
-                            const fechaEntrada = reserva.fechaEntrada.toDate();
-                            
-                            const cliente = clientsData.find(c => c.id === reserva.clienteId);
-                            const habitacion = roomsData.find(h => h.id === reserva.habitacionId);
-                            const li = document.createElement('li');
-                            
-                            const clienteNombre = cliente ? cliente.nombre : 'Cliente no encontrado';
-                            const habitacionNumero = habitacion ? `Habitación ${habitacion.numero}` : 'Habitación no encontrada';
-                            
-                            li.textContent = `Reserva de ${clienteNombre} en ${habitacionNumero} (Entrada: ${fechaEntrada.toLocaleDateString()})`;
-                            reservationsList.appendChild(li);
-                        });
-                    });
+            Promise.all([loadClients, loadRooms]).then(([clientsSnapshot, roomsSnapshot]) => {
+                const clientsData = clientsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const roomsData = roomsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-                }).catch(err => {
-                    console.error("Error al cargar datos:", err);
-                    clientsList.innerHTML = `<p>Error al cargar datos. Revisa la configuración de Firebase y las reglas de seguridad.</p>`;
-                    roomsList.innerHTML = '<p>Asegúrate de haber pegado la configuración correcta de Firebase en el script.</p>';
-                    reservationsList.innerHTML = '';
+                // Populate clients list
+                clientsList.innerHTML = '';
+                clientsData.forEach(client => {
+                    const li = document.createElement('li');
+                    li.textContent = `${client.nombre} (${client.email})`;
+                    clientsList.appendChild(li);
                 });
 
-            });
-        </script>
+                // Populate rooms list
+                roomsList.innerHTML = '';
+                roomsData.forEach(room => {
+                    const li = document.createElement('li');
+                    li.textContent = `Habitación ${room.numero} (${room.tipo}) - $${room.precio}`;
+                    roomsList.appendChild(li);
+                });
 
-    </body>
-    </html>
+                // Now that clients and rooms are loaded, load reservations
+                return db.collection('reservas').get().then(reservasSnapshot => {
+                    reservationsList.innerHTML = '';
+                    reservasSnapshot.docs.forEach(doc => {
+                        const reserva = doc.data();
+                        // Firestore guarda Timestamps, necesitamos convertirlos a Date
+                        const fechaEntrada = reserva.fechaEntrada.toDate();
+                        
+                        const cliente = clientsData.find(c => c.id === reserva.clienteId);
+                        const habitacion = roomsData.find(h => h.id === reserva.habitacionId);
+                        const li = document.createElement('li');
+                        
+                        const clienteNombre = cliente ? cliente.nombre : 'Cliente no encontrado';
+                        const habitacionNumero = habitacion ? `Habitación ${habitacion.numero}` : 'Habitación no encontrada';
+                        
+                        li.textContent = `Reserva de ${clienteNombre} en ${habitacionNumero} (Entrada: ${fechaEntrada.toLocaleDateString()})`;
+                        reservationsList.appendChild(li);
+                    });
+                });
+
+            }).catch(err => {
+                console.error("Error al cargar datos:", err);
+                clientsList.innerHTML = `<p>Error al cargar datos. Revisa la configuración de Firebase y las reglas de seguridad.</p>`;
+                roomsList.innerHTML = '<p>Asegúrate de haber pegado la configuración correcta de Firebase en el script.</p>';
+                reservationsList.innerHTML = '';
+            });
+        }
+    </script>
+
+</body>
+</html>

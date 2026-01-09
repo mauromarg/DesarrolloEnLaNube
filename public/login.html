@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - AppCheckIn</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f0f2f5; }
+        .login-container { background: #fff; padding: 40px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center; width: 350px; }
+        h1 { color: #0056b3; margin-bottom: 20px; }
+        input { width: calc(100% - 20px); padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .btn { background-color: #0056b3; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; margin-bottom: 10px; }
+        .btn:hover { background-color: #004494; }
+        .or-divider { margin: 20px 0; color: #888; }
+        .social-btn { display: flex; align-items: center; justify-content: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; margin-bottom: 10px; font-size: 14px; }
+        .social-btn img { width: 20px; height: 20px; margin-right: 10px; }
+        #error-message { color: red; margin-top: 10px; min-height: 18px; }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h1>AppCheckIn</h1>
+        <input type="email" id="email" placeholder="Correo electrónico" required>
+        <input type="password" id="password" placeholder="Contraseña" required>
+        <button id="login-btn" class="btn">Iniciar Sesión</button>
+        <button id="register-btn" class="btn" style="background-color: #6c757d;">Registrarse</button>
+        <div id="error-message"></div>
+
+        <div class="or-divider">o inicia sesión con</div>
+
+        <div id="google-login-btn" class="social-btn">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google">
+            <span>Continuar con Google</span>
+        </div>
+        <div id="microsoft-login-btn" class="social-btn">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft">
+            <span>Continuar con Microsoft</span>
+        </div>
+        <div id="apple-login-btn" class="social-btn">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="Apple" style="filter: invert(1); background-color: white;">
+            <span>Continuar con Apple</span>
+        </div>
+        <div id="yahoo-login-btn" class="social-btn">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/0/01/Yahoo.svg" alt="Yahoo">
+            <span>Continuar con Yahoo</span>
+        </div>
+    </div>
+
+    <!-- SDK de Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyBJkV7des2EtFX6EHJLUyzHJIvG7P86zGE",
+          authDomain: "desarrolloenlanube-34667-816f5.firebaseapp.com",
+          databaseURL: "https://desarrolloenlanube-34667-816f5-default-rtdb.firebaseio.com",
+          projectId: "desarrolloenlanube-34667-816f5",
+          storageBucket: "desarrolloenlanube-34667-816f5.firebasestorage.app",
+          messagingSenderId: "438315579198",
+          appId: "1:438315579198:web:51bcb77a9789c1981ade6f"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const errorMessage = document.getElementById('error-message');
+
+        // Redirigir si el usuario ya ha iniciado sesión
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                window.location.href = '/index.html';
+            }
+        });
+
+        // Iniciar sesión con correo y contraseña
+        document.getElementById('login-btn').addEventListener('click', () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            if (!email || !password) {
+                errorMessage.textContent = 'Por favor, ingresa correo y contraseña.';
+                return;
+            }
+            auth.signInWithEmailAndPassword(email, password)
+                .catch(error => {
+                    errorMessage.textContent = 'Error: ' + error.message;
+                });
+        });
+
+        // Registrarse con correo y contraseña
+        document.getElementById('register-btn').addEventListener('click', () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            if (!email || !password) {
+                errorMessage.textContent = 'Por favor, ingresa correo y contraseña para registrarte.';
+                return;
+            }
+            auth.createUserWithEmailAndPassword(email, password)
+                .catch(error => {
+                    errorMessage.textContent = 'Error de registro: ' + error.message;
+                });
+        });
+
+        // Iniciar sesión con proveedores (Google, Microsoft, etc.)
+        const setupProviderLogin = (btnId, provider) => {
+            document.getElementById(btnId).addEventListener('click', () => {
+                auth.signInWithPopup(provider).catch(error => {
+                    errorMessage.textContent = 'Error: ' + error.message;
+                });
+            });
+        };
+
+        setupProviderLogin('google-login-btn', new firebase.auth.GoogleAuthProvider());
+        setupProviderLogin('microsoft-login-btn', new firebase.auth.OAuthProvider('microsoft.com'));
+        setupProviderLogin('apple-login-btn', new firebase.auth.OAuthProvider('apple.com'));
+        setupProviderLogin('yahoo-login-btn', new firebase.auth.OAuthProvider('yahoo.com'));
+
+    </script>
+</body>
+</html>
