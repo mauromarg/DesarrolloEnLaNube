@@ -129,8 +129,7 @@
             background-color: #333; transition: .4s; border-radius: 34px;
         }
         .slider:before {
-            position: absolute; content: "";
-            height: 26px; width: 26px;
+            position: absolute; content: ""; height: 26px; width: 26px;
             left: 4px; bottom: 4px; background-color: white;
             transition: .4s; border-radius: 50%;
         }
@@ -210,7 +209,7 @@
         const firebaseConfig = {
           apiKey: "AIzaSyBJkV7des2EtFX6EHJLUyzHJIvG7P86zGE",
           authDomain: "desarrolloenlanube-34667-816f5.firebaseapp.com",
-          databaseURL: "desarrolloenlanube-34667-816f5-default-rtdb.firebaseio.com",
+          databaseURL: "https://desarrolloenlanube-34667-816f5-default-rtdb.firebaseio.com",
           projectId: "desarrolloenlanube-34667-816f5",
           storageBucket: "desarrolloenlanube-34667-816f5.appspot.com",
           messagingSenderId: "438315579198",
@@ -221,33 +220,8 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // --- SCRIPT TEMPORAL PARA ASIGNAR ROL DE ADMIN ---
-        async function setAdminRoleIfNeeded(user) {
-            const targetEmail = "ma.rg761@gmail.com";
-            if (user.email === targetEmail) {
-                try {
-                    const userQuery = await db.collection('usuarios').where('email', '==', targetEmail).limit(1).get();
-                    if (!userQuery.empty) {
-                        const userDoc = userQuery.docs[0];
-                        const userData = userDoc.data();
-                        if (userData.rol !== 'admin') {
-                            console.log("Asignando rol de 'admin' al usuario...");
-                            await userDoc.ref.update({ rol: 'admin' });
-                            // Forzar la recarga para que la nueva lógica de roles se aplique inmediatamente.
-                            window.location.reload();
-                        }
-                    }
-                } catch (error) {
-                    console.error("Error al asignar el rol de admin:", error);
-                }
-            }
-        }
-
         auth.onAuthStateChanged(async user => {
             if (user) {
-                // Ejecutar el script temporal ANTES de determinar la vista
-                await setAdminRoleIfNeeded(user);
-
                 const userProfile = await getUserProfile(user);
                 const role = userProfile ? userProfile.rol : 'huesped'; // Default a huésped
 
@@ -352,7 +326,7 @@
         }
 
         function updateGuestUI(data) {
-            document.getElementById('room-number-header').textContent = `Habitación ${data.numero || ''}`;
+            document.getElementById('room-number-header').textContent = \`Habitación ${data.numero || ''}\`;
             document.getElementById('room-type-header').textContent = data.tipo || 'Estándar';
             document.getElementById('door-status').textContent = data.puerta === 'abierta' ? 'Puerta Abierta (se bloqueará pronto)' : 'Bloqueada';
 
@@ -368,12 +342,12 @@
             const isAcOn = controls.ac_on === true;
             document.getElementById('ac-switch').checked = isAcOn;
             document.getElementById('ac-status').textContent = isAcOn ? 'Encendido' : 'Apagado';
-            document.getElementById('ac-temp').textContent = `${controls.ac_temp || 22}°C`;
+            document.getElementById('ac-temp').textContent = \`\${controls.ac_temp || 22}°C\`;
         }
 
         function showError(message) {
             const guestDashboard = document.getElementById('guest-dashboard');
-            guestDashboard.innerHTML = `<div id="room-info"><p style="color: #ff4d4d; font-size: 1.2rem;">${message}</p></div>`;
+            guestDashboard.innerHTML = \`<div id="room-info"><p style="color: #ff4d4d; font-size: 1.2rem;">\${message}</p></div>\`;
         }
 
         document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
