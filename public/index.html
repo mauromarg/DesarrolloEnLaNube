@@ -42,7 +42,6 @@
 
         .main-container { padding: 30px 40px; }
 
-        /* Estilos de las tarjetas y contenedores */
         .content-box, .control-card {
             background: var(--surface-dark);
             padding: 25px;
@@ -51,14 +50,12 @@
             box-shadow: 0 8px 20px rgba(0,0,0,0.2);
         }
         
-        /* Grid para ambas vistas */
         .grid-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 25px;
         }
 
-        /* --- VISTA HUÉSPED --- */
         #guest-dashboard #room-info {
             text-align: center;
             margin-bottom: 30px;
@@ -97,7 +94,6 @@
         .btn:hover { background-color: #0073d1; }
         .btn:active { transform: scale(0.98); }
 
-        /* --- VISTA ADMIN --- */
         #admin-dashboard ul {
             list-style: none;
             padding: 0;
@@ -112,7 +108,6 @@
             font-size: 15px;
         }
 
-        /* --- Controles comunes --- */
         #logout-btn {
             background-color: #c82333; color: white; padding: 10px 15px;
             border: none; border-radius: 8px; cursor: pointer;
@@ -145,61 +140,28 @@
         <button id="logout-btn">Cerrar Sesión</button>
     </div>
 
-    <!-- VISTA PARA HUÉSPEDES -->
     <div id="guest-dashboard" class="main-container hidden">
         <div id="room-info">
             <h1 id="room-number-header">Cargando...</h1>
             <p id="room-type-header">Buscando tu habitación...</p>
         </div>
         <div class="grid-container">
-            <div class="control-card">
-                <h2>Acceso Puerta</h2>
-                <div class="main-action"><button id="door-btn" class="btn">Desbloquear Puerta</button></div>
-                <p id="door-status" class="status">Pulsa para abrir</p>
-            </div>
-            <div class="control-card">
-                <h2>Iluminación</h2>
-                 <div class="main-action"><label class="switch"><input type="checkbox" id="light-switch"><span class="slider"></span></label></div>
-                <p id="light-status" class="status">Apagada</p>
-            </div>
-            <div class="control-card">
-                <h2>Cortinas</h2>
-                 <div class="main-action"><label class="switch"><input type="checkbox" id="curtain-switch"><span class="slider"></span></label></div>
-                <p id="curtain-status" class="status">Cerradas</p>
-            </div>
-            <div class="control-card">
-                <h2>Climatización</h2>
-                <div class="main-action" style="flex-direction: column;">
-                     <p class="ac-temperature" id="ac-temp">22°C</p>
-                     <label class="switch"><input type="checkbox" id="ac-switch"><span class="slider"></span></label>
-                </div>
-                <p id="ac-status" class="status">Apagado</p>
-            </div>
+            <div class="control-card"><h2>Acceso Puerta</h2><div class="main-action"><button id="door-btn" class="btn">Desbloquear</button></div><p id="door-status" class="status">Pulsa para abrir</p></div>
+            <div class="control-card"><h2>Iluminación</h2><div class="main-action"><label class="switch"><input type="checkbox" id="light-switch"><span class="slider"></span></label></div><p id="light-status" class="status">Apagada</p></div>
+            <div class="control-card"><h2>Cortinas</h2><div class="main-action"><label class="switch"><input type="checkbox" id="curtain-switch"><span class="slider"></span></label></div><p id="curtain-status" class="status">Cerradas</p></div>
+            <div class="control-card"><h2>Climatización</h2><div class="main-action" style="flex-direction: column;"><p class="ac-temperature" id="ac-temp">22°C</p><label class="switch"><input type="checkbox" id="ac-switch"><span class="slider"></span></label></div><p id="ac-status" class="status">Apagado</p></div>
         </div>
     </div>
 
-    <!-- VISTA PARA ADMINISTRADORES -->
     <div id="admin-dashboard" class="main-container hidden">
         <div class="grid-container">
-            <div id="rooms-section" class="content-box">
-                <h2>Habitaciones</h2>
-                <ul id="rooms-list"><p>Cargando...</p></ul>
-            </div>
-            <div id="reservations-section" class="content-box">
-                <h2>Reservas</h2>
-                <ul id="reservations-list"><p>Cargando...</p></ul>
-            </div>
-            <div id="clients-section" class="content-box">
-                <h2>Clientes</h2>
-                <ul id="clients-list"><p>Cargando...</p></ul>
-            </div>
+            <div class="content-box"><h2>Habitaciones</h2><ul id="rooms-list"><p>Cargando...</p></ul></div>
+            <div class="content-box"><h2>Reservas</h2><ul id="reservations-list"><p>Cargando...</p></ul></div>
+            <div class="content-box"><h2>Clientes</h2><ul id="clients-list"><p>Cargando...</p></ul></div>
         </div>
     </div>
     
-    <!-- Mensaje de Carga Inicial -->
-    <div id="loading-message" class="main-container" style="text-align: center;">
-        <h2>Verificando usuario...</h2>
-    </div>
+    <div id="loading-message" class="main-container" style="text-align: center;"><h2>Verificando usuario...</h2></div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -223,10 +185,15 @@
         auth.onAuthStateChanged(async user => {
             if (user) {
                 const userProfile = await getUserProfile(user);
-                const role = userProfile ? userProfile.rol : 'huesped'; // Default a huésped
-
                 document.getElementById('loading-message').classList.add('hidden');
 
+                if (!userProfile) {
+                    document.getElementById('guest-dashboard').classList.remove('hidden');
+                    showError("Perfil Incompleto", "Tu cuenta se ha creado, pero falta configurar tu perfil. Por favor, contacta con recepción.");
+                    return;
+                }
+
+                const role = userProfile.rol || 'huesped';
                 if (role === 'admin') {
                     document.getElementById('admin-dashboard').classList.remove('hidden');
                     loadAdminData();
@@ -246,108 +213,67 @@
             return { id: doc.id, ...doc.data() };
         }
 
-        // --- LÓGICA DE ADMINISTRADOR ---
         function loadAdminData() {
-            const loadClients = db.collection('usuarios').get();
-            const loadRooms = db.collection('habitaciones').get();
-            const loadReservations = db.collection('reservas').get();
-
-            Promise.all([loadClients, loadRooms, loadReservations]).then(([clientsSnap, roomsSnap, reservationsSnap]) => {
-                const clientsData = clientsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const roomsData = roomsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-                // Renderizar Clientes
-                const clientsList = document.getElementById('clients-list');
-                clientsList.innerHTML = '';
-                clientsData.forEach(c => {
-                    const li = document.createElement('li');
-                    li.textContent = `${c.nombre} (${c.email}) - Rol: ${c.rol || 'huesped'}`;
-                    clientsList.appendChild(li);
-                });
-
-                // Renderizar Habitaciones
-                const roomsList = document.getElementById('rooms-list');
-                roomsList.innerHTML = '';
-                roomsData.forEach(r => {
-                    const li = document.createElement('li');
-                    li.textContent = `Habitación ${r.numero} (${r.tipo}) - $${r.precio}`;
-                    roomsList.appendChild(li);
-                });
-                
-                // Renderizar Reservas
-                const reservationsList = document.getElementById('reservations-list');
-                reservationsList.innerHTML = '';
-                reservationsSnap.docs.forEach(doc => {
+            const loadAll = Promise.all([db.collection('usuarios').get(), db.collection('habitaciones').get(), db.collection('reservas').get()]);
+            loadAll.then(([clientsSnap, roomsSnap, reservationsSnap]) => {
+                const clients = clientsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                const rooms = roomsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                document.getElementById('clients-list').innerHTML = clients.map(c => `<li>${c.nombre} (${c.email}) - Rol: ${c.rol || 'huesped'}</li>`).join('');
+                document.getElementById('rooms-list').innerHTML = rooms.map(r => `<li>Habitación ${r.numero} (${r.tipo}) - $${r.precio}</li>`).join('');
+                const resHtml = reservationsSnap.docs.map(doc => {
                     const r = doc.data();
-                    const client = clientsData.find(c => c.id === r.clienteId);
-                    const room = roomsData.find(h => h.id === r.habitacionId);
-                    const li = document.createElement('li');
-                    li.textContent = `Reserva de ${client ? client.nombre : 'N/A'} en Hab. ${room ? room.numero : 'N/A'}`;
-                    reservationsList.appendChild(li);
-                });
-
+                    const client = clients.find(c => c.id === r.clienteId);
+                    const room = rooms.find(h => h.id === r.habitacionId);
+                    return `<li>Reserva de ${client ? client.nombre : 'N/A'} en Hab. ${room ? room.numero : 'N/A'}</li>`;
+                }).join('');
+                document.getElementById('reservations-list').innerHTML = resHtml;
             }).catch(err => console.error("Error cargando datos de admin:", err));
         }
 
-        // --- LÓGICA DE HUÉSPED ---
         async function findUserRoom(user, userProfile) {
-            if (!userProfile) {
-                showError("No se encontró tu perfil de cliente.");
-                return;
-            }
             try {
-                const reservationQuery = await db.collection('reservas').where('clienteId', '==', userProfile.id).limit(1).get();
-                if (reservationQuery.empty) {
-                    showError("No tienes una reserva activa.");
+                const resQuery = await db.collection('reservas').where('clienteId', '==', userProfile.id).limit(1).get();
+                if (resQuery.empty) {
+                    document.getElementById('room-number-header').textContent = `¡Bienvenido, ${userProfile.nombre || 'huésped'}!`;
+                    document.getElementById('room-type-header').textContent = 'Tu reserva está siendo procesada. Te asignaremos una habitación en breve.';
+                    document.querySelector('#guest-dashboard .grid-container').classList.add('hidden');
                     return;
                 }
-                const habitacionId = reservationQuery.docs[0].data().habitacionId;
+                const habitacionId = resQuery.docs[0].data().habitacionId;
+                document.querySelector('#guest-dashboard .grid-container').classList.remove('hidden');
                 setupRoomControls(habitacionId);
             } catch (error) {
-                showError("Error al cargar los datos de tu habitación.");
+                console.error("Error buscando habitación:", error);
+                showError("Error de Carga", "No pudimos cargar los datos de tu habitación.");
             }
         }
 
         function setupRoomControls(roomId) {
             const roomRef = db.collection('habitaciones').doc(roomId);
             roomRef.onSnapshot(doc => {
-                if (!doc.exists) { showError("La habitación asignada no existe."); return; }
-                updateGuestUI(doc.data());
+                if (doc.exists) updateGuestUI(doc.data());
             });
-
-            document.getElementById('door-btn').addEventListener('click', () => {
-                roomRef.update({ puerta: 'abierta' }).then(() => {
-                    setTimeout(() => roomRef.update({ puerta: 'cerrada' }), 5000);
-                });
-            });
-            document.getElementById('light-switch').addEventListener('change', e => roomRef.update({ 'control.luz': e.target.checked }));
-            document.getElementById('curtain-switch').addEventListener('change', e => roomRef.update({ 'control.cortinas': e.target.checked }));
-            document.getElementById('ac-switch').addEventListener('change', e => roomRef.update({ 'control.ac_on': e.target.checked }));
+            document.getElementById('door-btn').onclick = () => roomRef.update({ puerta: 'abierta' }).then(() => setTimeout(() => roomRef.update({ puerta: 'cerrada' }), 5000));
+            document.getElementById('light-switch').onchange = e => roomRef.update({ 'control.luz': e.target.checked });
+            document.getElementById('curtain-switch').onchange = e => roomRef.update({ 'control.cortinas': e.target.checked });
+            document.getElementById('ac-switch').onchange = e => roomRef.update({ 'control.ac_on': e.target.checked });
         }
 
         function updateGuestUI(data) {
-            document.getElementById('room-number-header').textContent = \`Habitación ${data.numero || ''}\`;
+            document.getElementById('room-number-header').textContent = `Habitación ${data.numero || ''}`;
             document.getElementById('room-type-header').textContent = data.tipo || 'Estándar';
-            document.getElementById('door-status').textContent = data.puerta === 'abierta' ? 'Puerta Abierta (se bloqueará pronto)' : 'Bloqueada';
-
-            const controls = data.control || {};
-            const isLightOn = controls.luz === true;
-            document.getElementById('light-switch').checked = isLightOn;
-            document.getElementById('light-status').textContent = isLightOn ? 'Encendida' : 'Apagada';
-
-            const areCurtainsOpen = controls.cortinas === true;
-            document.getElementById('curtain-switch').checked = areCurtainsOpen;
-            document.getElementById('curtain-status').textContent = areCurtainsOpen ? 'Abiertas' : 'Cerradas';
-
-            const isAcOn = controls.ac_on === true;
-            document.getElementById('ac-switch').checked = isAcOn;
-            document.getElementById('ac-status').textContent = isAcOn ? 'Encendido' : 'Apagado';
-            document.getElementById('ac-temp').textContent = \`\${controls.ac_temp || 22}°C\`;
+            document.getElementById('door-status').textContent = data.puerta === 'abierta' ? 'Abierta (se bloqueará pronto)' : 'Bloqueada';
+            const ctr = data.control || {};
+            document.getElementById('light-switch').checked = !!ctr.luz; document.getElementById('light-status').textContent = ctr.luz ? 'Encendida' : 'Apagada';
+            document.getElementById('curtain-switch').checked = !!ctr.cortinas; document.getElementById('curtain-status').textContent = ctr.cortinas ? 'Abiertas' : 'Cerradas';
+            document.getElementById('ac-switch').checked = !!ctr.ac_on; document.getElementById('ac-status').textContent = ctr.ac_on ? 'Encendido' : 'Apagado';
+            document.getElementById('ac-temp').textContent = `${ctr.ac_temp || 22}°C`;
         }
 
-        function showError(message) {
-            const guestDashboard = document.getElementById('guest-dashboard');
-            guestDashboard.innerHTML = \`<div id="room-info"><p style="color: #ff4d4d; font-size: 1.2rem;">\${message}</p></div>\`;
+        function showError(title, message) {
+            const roomInfo = document.getElementById('room-info');
+            roomInfo.innerHTML = `<h1 style="color: #ff4d4d;">${title}</h1><p>${message}</p>`;
+            document.querySelector('#guest-dashboard .grid-container').classList.add('hidden');
         }
 
         document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
