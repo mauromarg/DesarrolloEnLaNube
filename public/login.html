@@ -11,7 +11,7 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            overflow: hidden; /* Evita que el vídeo desborde la página */
+            overflow: hidden;
         }
         #video-background {
             position: fixed;
@@ -20,16 +20,16 @@
             min-width: 100%;
             min-height: 100%;
             z-index: -1;
-            filter: blur(3px) brightness(0.8); /* Desenfoca e escurece o vídeo */
+            filter: blur(3px) brightness(0.7);
         }
         .login-container {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.5); /* Negro translúcido */
             padding: 40px;
             border-radius: 15px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             text-align: center;
             width: 380px;
             color: white;
@@ -39,13 +39,13 @@
             width: calc(100% - 22px);
             padding: 12px;
             margin-bottom: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 8px;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.15);
             color: white;
             font-size: 16px;
         }
-        input::placeholder { color: #eee; }
+        input::placeholder { color: #ccc; }
         .btn {
             background-color: #0056b3;
             color: white;
@@ -65,17 +65,17 @@
             align-items: center;
             justify-content: center;
             padding: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 8px;
             cursor: pointer;
             margin-bottom: 10px;
             font-size: 14px;
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.1);
             transition: background-color 0.3s;
         }
-        .social-btn:hover { background: rgba(255, 255, 255, 0.25); }
+        .social-btn:hover { background: rgba(255, 255, 255, 0.2); }
         .social-btn img { width: 20px; height: 20px; margin-right: 12px; }
-        #error-message { color: #ffcdd2; margin-top: 10px; min-height: 18px; }
+        #error-message { color: #ffcdd2; margin-top: 10px; min-height: 18px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -99,17 +99,9 @@
             <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google">
             <span>Continuar con Google</span>
         </div>
-        <div id="microsoft-login-btn" class="social-btn">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft">
-            <span>Continuar con Microsoft</span>
-        </div>
         <div id="apple-login-btn" class="social-btn">
             <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="Apple" style="filter: invert(1);">
             <span>Continuar con Apple</span>
-        </div>
-        <div id="yahoo-login-btn" class="social-btn">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/8/8a/Yahoo%21_icon.svg" alt="Yahoo">
-            <span>Continuar con Yahoo</span>
         </div>
     </div>
 
@@ -132,14 +124,12 @@
         const auth = firebase.auth();
         const errorMessage = document.getElementById('error-message');
 
-        // Redirigir si el usuario ya ha iniciado sesión
         auth.onAuthStateChanged(user => {
             if (user) {
                 window.location.href = '/index.html';
             }
         });
 
-        // Iniciar sesión con correo y contraseña
         document.getElementById('login-btn').addEventListener('click', () => {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
@@ -153,7 +143,6 @@
                 });
         });
 
-        // Registrarse con correo y contraseña
         document.getElementById('register-btn').addEventListener('click', () => {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
@@ -167,19 +156,23 @@
                 });
         });
 
-        // Iniciar sesión con proveedores (Google, Microsoft, etc.)
-        const setupProviderLogin = (btnId, provider) => {
-            document.getElementById(btnId).addEventListener('click', () => {
-                auth.signInWithPopup(provider).catch(error => {
-                    errorMessage.textContent = 'Error: ' + error.message;
-                });
+        // Iniciar sesión con Google (forzando la selección de cuenta)
+        document.getElementById('google-login-btn').addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.setCustomParameters({ prompt: 'select_account' });
+            auth.signInWithPopup(provider).catch(error => {
+                errorMessage.textContent = 'Error: ' + error.message;
             });
-        };
+        });
 
-        setupProviderLogin('google-login-btn', new firebase.auth.GoogleAuthProvider());
-        setupProviderLogin('microsoft-login-btn', new firebase.auth.OAuthProvider('microsoft.com'));
-        setupProviderLogin('apple-login-btn', new firebase.auth.OAuthProvider('apple.com'));
-        setupProviderLogin('yahoo-login-btn', new firebase.auth.OAuthProvider('yahoo.com'));
+        // Iniciar sesión con Apple
+        document.getElementById('apple-login-btn').addEventListener('click', () => {
+            const provider = new firebase.auth.OAuthProvider('apple.com');
+            auth.signInWithPopup(provider).catch(error => {
+                errorMessage.textContent = 'Apple Sign-In no está configurado. Pide ayuda al desarrollador.';
+                console.error("Error de Apple Sign-In:", error);
+            });
+        });
 
     </script>
 </body>
