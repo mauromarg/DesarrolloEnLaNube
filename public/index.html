@@ -213,34 +213,43 @@
         let currentUserProfile = null;
 
         auth.onAuthStateChanged(async user => {
-            if (user) {
-                currentUser = user;
-                document.getElementById('user-email').textContent = user.email;
-                
-                const userProfile = await getUserProfile(user);
-                currentUserProfile = userProfile;
-                document.getElementById('loading-message').classList.add('hidden');
+            try {
+                if (user) {
+                    currentUser = user;
+                    document.getElementById('user-email').textContent = user.email;
+                    
+                    const userProfile = await getUserProfile(user);
+                    currentUserProfile = userProfile;
+                    document.getElementById('loading-message').classList.add('hidden');
 
-                if (!userProfile) {
-                    document.getElementById('guest-dashboard').classList.remove('hidden');
-                    showError("Perfil Incompleto", "Tu cuenta se ha creado, pero falta configurar tu perfil. Por favor, contacta con recepción.");
-                    return;
-                }
+                    if (!userProfile) {
+                        document.getElementById('guest-dashboard').classList.remove('hidden');
+                        showError("Perfil Incompleto", "Tu cuenta se ha creado, pero falta configurar tu perfil. Por favor, contacta con recepción.");
+                        return;
+                    }
 
-                const role = userProfile.rol || 'huesped';
-                document.getElementById('user-role').textContent = `Rol: ${role}`;
+                    const role = userProfile.rol || 'huesped';
+                    document.getElementById('user-role').textContent = `Rol: ${role}`;
 
-                if (role === 'admin') {
-                    document.getElementById('admin-dashboard').classList.remove('hidden');
-                    document.getElementById('guest-dashboard').classList.add('hidden');
-                    loadAdminData();
+                    if (role === 'admin') {
+                        document.getElementById('admin-dashboard').classList.remove('hidden');
+                        document.getElementById('guest-dashboard').classList.add('hidden');
+                        loadAdminData();
+                    } else {
+                        document.getElementById('guest-dashboard').classList.remove('hidden');
+                        document.getElementById('admin-dashboard').classList.add('hidden');
+                        findUserRoom();
+                    }
                 } else {
-                    document.getElementById('guest-dashboard').classList.remove('hidden');
-                    document.getElementById('admin-dashboard').classList.add('hidden');
-                    findUserRoom();
+                    window.location.href = '/login.html';
                 }
-            } else {
-                window.location.href = '/login.html';
+            } catch (error) {
+                console.error("Error during auth state change:", error);
+                const loadingMessage = document.getElementById('loading-message');
+                loadingMessage.innerHTML = `<h2 style="color: #ff4d4d;">Error de Inicialización</h2><p>No se pudo cargar el perfil de usuario. Por favor, recarga la página. Error: ${error.message}</p>`;
+                loadingMessage.classList.remove('hidden');
+                document.getElementById('guest-dashboard').classList.add('hidden');
+                document.getElementById('admin-dashboard').classList.add('hidden');
             }
         });
         
