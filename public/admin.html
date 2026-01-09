@@ -16,16 +16,17 @@
         .content-box { background: var(--surface-dark); padding: 25px; border-radius: 15px; border: 1px solid var(--border-color); }
         h2 { border-bottom: 1px solid var(--primary-accent); padding-bottom: 10px; margin-top: 0; }
         .filter-buttons { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
-        .filter-buttons button { background-color: #333; color: white; padding: 10px 15px; border: 1px solid var(--primary-accent); border-radius: 8px; cursor: pointer; }
+        .filter-buttons button, .action-btn { background-color: #333; color: white; padding: 10px 15px; border: 1px solid var(--primary-accent); border-radius: 8px; cursor: pointer; }
         .filter-buttons button.active { background-color: var(--primary-accent); }
+        .action-btn { background-color: var(--primary-accent); margin-top: 15px; }
         ul { list-style: none; padding: 0; margin: 0; }
         .item { background: rgba(255, 255, 255, 0.05); margin-bottom: 10px; padding: 15px; border-radius: 8px; }
         .room-item-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .room-details { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color); }
         .room-image-gallery { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; }
         .room-image-gallery img { width: 120px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color); }
-        .suggestion-item { padding: 10px; cursor: pointer; background-color: #333; border-bottom: 1px solid var(--border-color); }
-        .suggestion-item:hover { background-color: var(--primary-accent); }
+        #user-select { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--border-color); background-color: #2a2a2a; color: var(--text-primary); }
+        #user-details input, #user-details select { width: calc(100% - 22px); padding: 10px; margin-top: 5px; border-radius: 8px; border: 1px solid var(--border-color); background-color: #2a2a2a; color: var(--text-primary); }
     </style>
 </head>
 <body>
@@ -39,8 +40,7 @@
     <div class="container">
         <div class="content-box">
             <h2>Clientes</h2>
-            <input type="text" id="user-search" placeholder="Buscar usuario por email..." style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--border-color); background-color: #2a2a2a; color: var(--text-primary);">
-            <div id="user-suggestions"></div>
+            <select id="user-select"></select>
             <div id="user-details" style="margin-top: 20px;"></div>
         </div>
         <div class="content-box"><h2>Habitaciones</h2>
@@ -66,24 +66,25 @@
 
         let allRooms = [], allUsers = [], allReservations = [];
         let currentFilter = 'all';
-        
+        let currentUser = null;
+
         const placeholderImages = [
-            "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=800&auto=format&fit=crop", // Cama
-            "https://images.unsplash.com/photo-1582573648435-15e3d7497298?q=80&w=800&auto=format&fit=crop", // Baño
-            "https://images.unsplash.com/photo-1593359677879-a4bb92f82d7f?q=80&w=800&auto=format&fit=crop", // TV
-            "https://images.unsplash.com/photo-1559599238-308793637427?q=80&w=800&auto=format&fit=crop", // Balcón
-            "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=800&auto=format&fit=crop"  // Escritorio
+            "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=800&auto=format&fit=crop",
+            "https://images.unsplash.com/photo-1582573648435-15e3d7497298?q=80&w=800&auto=format&fit=crop",
+            "https://images.unsplash.com/photo-1593359677879-a4bb92f82d7f?q=80&w=800&auto=format&fit=crop",
+            "https://images.unsplash.com/photo-1559599238-308793637427?q=80&w=800&auto=format&fit=crop",
+            "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=800&auto=format&fit=crop"
         ];
 
         auth.onAuthStateChanged(user => {
             if (user) {
+                currentUser = user;
                 document.getElementById('user-email').textContent = user.email;
                 db.collection('usuarios').doc(user.uid).get().then(doc => {
                     if (!doc.exists || doc.data().rol !== 'admin') {
                         window.location.href = '/index.html';
                     } else {
                         loadInitialData();
-                        setupUserSearch();
                     }
                 });
             } else {
@@ -92,58 +93,95 @@
         });
 
         function loadInitialData() {
-            db.collection('usuarios').onSnapshot(snap => { 
-                allUsers = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })); 
-                renderRooms(); 
+            db.collection('usuarios').orderBy('email').onSnapshot(snap => {
+                allUsers = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setupUserDropdown();
+                renderRooms();
             });
             db.collection('habitaciones').onSnapshot(snap => { allRooms = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderRooms(); });
             db.collection('reservas').onSnapshot(snap => { allReservations = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderRooms(); });
         }
 
-        function setupUserSearch() {
-            const searchInput = document.getElementById('user-search');
-            const suggestionsContainer = document.getElementById('user-suggestions');
-            const userDetailsContainer = document.getElementById('user-details');
-
-            searchInput.addEventListener('input', () => {
-                const searchTerm = searchInput.value.toLowerCase();
-                if (searchTerm.length < 2) {
-                    suggestionsContainer.innerHTML = '';
-                    return;
-                }
-
-                const filteredUsers = allUsers.filter(user => user.email.toLowerCase().includes(searchTerm));
-                
-                suggestionsContainer.innerHTML = filteredUsers.map(user => 
-                    `<div class="suggestion-item" data-id="${user.id}">${user.email}</div>`
-                ).join('');
+        function setupUserDropdown() {
+            const userSelect = document.getElementById('user-select');
+            const selectedVal = userSelect.value;
+            userSelect.innerHTML = '<option value="">Seleccione un usuario</option>';
+            allUsers.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.id;
+                option.textContent = user.email;
+                userSelect.appendChild(option);
             });
-
-            suggestionsContainer.addEventListener('click', (event) => {
-                if (event.target.classList.contains('suggestion-item')) {
-                    const userId = event.target.getAttribute('data-id');
-                    displayUserDetails(userId);
-                    suggestionsContainer.innerHTML = '';
-                    searchInput.value = '';
-                }
+            userSelect.value = selectedVal;
+            userSelect.addEventListener('change', () => {
+                document.getElementById('user-details').innerHTML = '';
+                if (userSelect.value) displayUserDetails(userSelect.value);
             });
         }
 
-        function displayUserDetails(userId) {
+        function displayUserDetails(userId, isEditing = false) {
             const user = allUsers.find(u => u.id === userId);
             const userDetailsContainer = document.getElementById('user-details');
-            
-            if (user) {
-                let detailsHTML = '<h3>Detalles del Usuario</h3>';
+            if (!user) { userDetailsContainer.innerHTML = '<p>Usuario no encontrado.</p>'; return; }
+
+            let detailsHTML = '<h3>Detalles del Usuario</h3>';
+            if (isEditing) {
+                detailsHTML += `<div><p><strong>email:</strong> ${user.email}</p></div>`;
                 for (const [key, value] of Object.entries(user)) {
-                    if (key !== 'id') { // Don't display the user ID
-                        detailsHTML += `<p><strong>${key}:</strong> ${value}</p>`;
+                    if (key !== 'id' && key !== 'email') {
+                        detailsHTML += `<div><p><strong>${key}:</strong></p>`;
+                        if (key === 'rol') {
+                            detailsHTML += `<select id="edit-${key}"><option value="cliente" ${value === 'cliente' ? 'selected' : ''}>Cliente</option><option value="admin" ${value === 'admin' ? 'selected' : ''}>Admin</option></select>`;
+                        } else {
+                            detailsHTML += `<input type="text" id="edit-${key}" value="${value}">`;
+                        }
+                        detailsHTML += `</div>`;
                     }
                 }
-                userDetailsContainer.innerHTML = detailsHTML;
+                detailsHTML += `<button onclick="saveUser('${userId}')" class="action-btn">Guardar</button>`;
             } else {
-                userDetailsContainer.innerHTML = '<p>Usuario no encontrado.</p>';
+                for (const [key, value] of Object.entries(user)) {
+                    if (key !== 'id') detailsHTML += `<p><strong>${key}:</strong> ${value}</p>`;
+                }
+                detailsHTML += `<button onclick="displayUserDetails('${userId}', true)" class="action-btn">Editar</button>`;
             }
+            userDetailsContainer.innerHTML = detailsHTML;
+        }
+
+        async function saveUser(userId) {
+            const userRef = db.collection('usuarios').doc(userId);
+            const originalUser = allUsers.find(u => u.id === userId);
+            const updatedData = {};
+            const cambios = {};
+
+            for (const key of Object.keys(originalUser)) {
+                if (key !== 'id' && key !== 'email') {
+                    const input = document.getElementById(`edit-${key}`);
+                    if (input && input.value !== originalUser[key]) {
+                        updatedData[key] = input.value;
+                        cambios[key] = { antes: originalUser[key], despues: input.value };
+                    }
+                }
+            }
+
+            if (Object.keys(updatedData).length > 0) {
+                try {
+                    await userRef.update(updatedData);
+                    await db.collection('modificaciones_usuarios').add({
+                        usuarioId: userId,
+                        usuarioEmail: originalUser.email,
+                        adminId: currentUser.uid,
+                        adminEmail: currentUser.email,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        cambios: cambios
+                    });
+                    alert('Usuario actualizado con éxito.');
+                } catch (error) {
+                    console.error("Error al actualizar el usuario: ", error);
+                    alert('Error al actualizar el usuario.');
+                }
+            }
+            displayUserDetails(userId);
         }
 
         function renderRooms() {
@@ -153,34 +191,22 @@
                 const user = allUsers.find(u => u.id === res.clienteId);
                 return { status: res.estado === 'activa' ? 'occupied' : 'reserved', reservation: res, user };
             };
-
             const roomList = document.getElementById('room-list');
             const filteredRooms = allRooms.filter(room => currentFilter === 'all' || getRoomStatus(room.id).status === currentFilter);
-            
-            if (filteredRooms.length === 0) {
-                roomList.innerHTML = '<li>No hay habitaciones que coincidan con el filtro.</li>';
-                return;
-            }
-
+            if (filteredRooms.length === 0) { roomList.innerHTML = '<li>No hay habitaciones que coincidan con el filtro.</li>'; return; }
             roomList.innerHTML = filteredRooms.map(room => {
                 const { status, user } = getRoomStatus(room.id);
-                
                 const imageGalleryHTML = `<div class="room-image-gallery">${placeholderImages.map(img => `<img src="${img}" alt="Foto de la habitación">`).join('')}</div>`;
-                
                 let details = '';
                 if (status === 'occupied' || status === 'reserved') {
                     details = `<p><strong>${status === 'occupied' ? 'Ocupada' : 'Reservada'} por:</strong> ${user ? user.email : 'N/A'}</p>`;
                 }
-
                 return `<li class="item">
                     <div class="room-item-header" onclick="toggleDetails(this)">
                         <strong>Habitación ${room.numero} (${room.tipo})</strong>
                         <span>${status.charAt(0).toUpperCase() + status.slice(1)}</span>
                     </div>
-                    <div class="room-details">
-                        ${imageGalleryHTML}
-                        ${details}
-                    </div>
+                    <div class="room-details">${imageGalleryHTML}${details}</div>
                 </li>`;
             }).join('');
         }
@@ -191,12 +217,10 @@
             document.querySelector(`.filter-buttons button[onclick="filterRooms('${filter}')"]`).classList.add('active');
             renderRooms();
         }
-        
+
         function toggleDetails(header) {
             const details = header.nextElementSibling;
-            if (details && details.classList.contains('room-details')) {
-                 details.style.display = details.style.display === 'block' ? 'none' : 'block';
-            }
+            if (details) details.style.display = details.style.display === 'block' ? 'none' : 'block';
         }
 
         document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
