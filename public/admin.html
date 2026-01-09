@@ -43,7 +43,7 @@
     <div class="container">
         <div class="content-box">
             <h2>Clientes</h2><select id="user-select"></select><div id="user-details" style="margin-top: 20px;"></div>
-            <div id="new-room-section" style="margin-top: 30px;"><h2>Nueva Habitación</h2><form id="new-room-form"><input type="number" id="room-number" placeholder="Número de Habitación" required><select id="room-type" required><option value="single">Single</option><option value="double">Double</option><option value="suite">Suite</option></select><input type="number" id="room-price" placeholder="Precio por noche" required><textarea id="room-description" placeholder="Descripción"></textarea><label>Imágenes:</label><input type="file" id="room-images" multiple accept="image/*"><progress id="upload-progress" value="0" max="100"></progress><button type="submit" class="action-btn">Guardar Habitación</button></form></div>
+            <div id="new-room-section" style="margin-top: 30px;"><h2>Nueva Habitación</h2><form id="new-room-form"><input type="number" id="room-number" placeholder="Número de Habitación" required><select id="room-type" required><option value="single">Single</option><option value="double">Double</option><option value="suite">Suite</option></select><input type="number" id="room-price" placeholder="Precio por noche" required><textarea id="room-description" placeholder="Descripción"></textarea><label>Imágenes:</label><input type="file" id="room-images" multiple accept="image/png, image/jpeg, image/jpg"><progress id="upload-progress" value="0" max="100"></progress><button type="submit" class="action-btn">Guardar Habitación</button></form></div>
         </div>
         <div class="content-box"><h2>Habitaciones</h2><div class="filter-buttons"><button onclick="filterRooms('all')" class="active">Todas</button><button onclick="filterRooms('available')">Disponibles</button><button onclick="filterRooms('reserved')">Reservadas</button><button onclick="filterRooms('occupied')">Ocupadas</button></div><ul id="room-list"></ul></div>
     </div>
@@ -172,7 +172,7 @@
                 <label>Precio:</label><input type="number" id="edit-room-price" value="${room.precio}" required>
                 <label>Descripción:</label><textarea id="edit-room-description">${room.descripcion || ''}</textarea>
                 <label>Imágenes Actuales:</label><div id="edit-image-gallery" class="edit-image-gallery">${(room.imagenes || []).map((img, index) => `<div class="edit-image-item" id="img-container-${index}"><img src="${img}"><button type="button" class="delete-img-btn" onclick="markImageForDeletion('${img}', 'img-container-${index}')">&times;</button></div>`).join('')}</div>
-                <label style="margin-top:15px;">Añadir Nuevas Imágenes:</label><input type="file" id="edit-room-images" multiple accept="image/*">
+                <label style="margin-top:15px;">Añadir Nuevas Imágenes:</label><input type="file" id="edit-room-images" multiple accept="image/png, image/jpeg, image/jpg">
                 <progress id="edit-upload-progress" value="0" max="100" style="display:none;"></progress>
                 <button type="submit" class="action-btn">Guardar Cambios</button>
                 <button type="button" onclick="deleteRoom('${room.id}')" class="btn-danger" style="margin-left: 10px;">Eliminar Habitación</button>`;
