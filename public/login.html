@@ -10,8 +10,15 @@
             display: flex; justify-content: center; align-items: center;
             height: 100vh; overflow: hidden; margin: 0;
         }
-        #background-carousel { /* ... (estilos sin cambios) ... */ }
-        .background-image { /* ... (estilos sin cambios) ... */ }
+        #background-carousel {
+            position: fixed; right: 0; bottom: 0; min-width: 100%; min-height: 100%; z-index: -1;
+        }
+        .background-image {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; opacity: 0; transition: opacity 1.5s ease-in-out;
+            filter: blur(3px) brightness(0.7);
+        }
+        .background-image.active { opacity: 1; }
         .login-container {
             background: rgba(0, 0, 0, 0.65);
             padding: 40px;
@@ -21,20 +28,23 @@
             border: 1px solid rgba(255, 255, 255, 0.15);
             text-align: center; width: 390px; color: white;
         }
-        h1 { color: white; margin-bottom: 25px; }
+        h1 { color: white; margin-bottom: 25px; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
         input {
             width: 100%; padding: 14px; margin-bottom: 18px;
-            border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px;
-            background: rgba(255, 255, 255, 0.1); color: white; font-size: 16px;
-            box-sizing: border-box;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px; background: rgba(255, 255, 255, 0.1);
+            color: white; font-size: 16px; box-sizing: border-box;
         }
+        input::placeholder { color: #b3b3b3; }
         .btn {
             padding: 14px; border: none; border-radius: 8px; cursor: pointer;
             width: 100%; font-size: 16px; margin-bottom: 12px; font-weight: 600;
             transition: background-color 0.3s;
         }
         #login-btn { background-color: #008cff; color: white; }
-        #register-redirect-btn { background-color: #495057; color: white; }
+        #login-btn:hover { background-color: #0073d1; }
+        #register-redirect-btn { background-color: #495057; }
+        #register-redirect-btn:hover { background-color: #3a4045; }
 
         .social-login-divider {
             display: flex; align-items: center; text-align: center; color: #b3b3b3;
@@ -54,12 +64,27 @@
         #google-btn { background-color: #fff; color: #333; }
         #apple-btn { background-color: #000; color: #fff; border: 1px solid #fff; }
 
-        #message-area, #error-message { /* ... (estilos sin cambios) ... */ }
-        #forgot-password-link { /* ... (estilos sin cambios) ... */ }
+        #message-area {
+            color: #d4edda; background-color: rgba(40, 167, 69, 0.2);
+            border: 1px solid rgba(40, 167, 69, 0.5);
+            padding: 12px; border-radius: 8px; margin-bottom: 15px;
+        }
+        #error-message {
+            color: #ffcdd2; background-color: rgba(220, 53, 69, 0.2);
+            border: 1px solid rgba(220, 53, 69, 0.5);
+            padding: 12px; border-radius: 8px;
+        }
+        #message-area.hidden, #error-message.hidden { display: none; }
+        #forgot-password-link {
+            display: block; margin-top: 15px; font-size: 0.9rem;
+            color: #008cff; text-decoration: none;
+        }
+        #forgot-password-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
     <div id="background-carousel"></div>
+
     <div class="login-container">
         <h1>AppCheckIn</h1>
         <div id="message-area" class="hidden"></div>
@@ -88,40 +113,90 @@
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script>
-        const firebaseConfig = { /* ... (configuración sin cambios) ... */ };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
 
-        // --- Manejadores de elementos del DOM ---
+    <script>
+        // --- Carrusel de Fondo ---
+        const images = ['https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1974&auto=format&fit=crop','https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?q=80&w=2070&auto=format&fit=crop','https://images.unsplash.com/photo-1520454974749-611bed2419af?q=80&w=2070&auto=format&fit=crop','https://images.unsplash.com/photo-1618773928121-c32242e63f39?q=80&w=2070&auto=format&fit=crop','https://images.unsplash.com/photo-1543969787-c932342c35f2?q=80&w=2070&auto=format&fit=crop'];
+        let currentImageIndex = 0;
+        const carouselContainer = document.getElementById('background-carousel');
+        const imageElements = images.map(src => { const img = new Image(); img.src = src; img.className = 'background-image'; carouselContainer.appendChild(img); return img; });
+        window.onload = () => {
+            if (imageElements.length > 0) { imageElements[0].classList.add('active'); setInterval(() => { imageElements[currentImageIndex].classList.remove('active'); currentImageIndex = (currentImageIndex + 1) % images.length; imageElements[currentImageIndex].classList.add('active'); }, 5000); }
+            handleUrlParams();
+        };
+
+        // --- Lógica de Firebase ---
+        const firebaseConfig = { apiKey: "AIzaSyBJkV7des2EtFX6EHJLUyzHJIvG7P86zGE", authDomain: "desarrolloenlanube-34667-816f5.firebaseapp.com", databaseURL: "https://desarrolloenlanube-34667-816f5-default-rtdb.firebaseio.com", projectId: "desarrolloenlanube-34667-816f5", storageBucket: "desarrolloenlanube-34667-816f5.appspot.com", messagingSenderId: "438315579198", appId: "1:438315579198:web:51bcb77a9789c1981ade6f" };
+        firebase.initializeApp(firebaseConfig);
+        
+        const auth = firebase.auth();
         const emailInput = document.getElementById('email');
-        // ... (otros elementos)
+        const messageArea = document.getElementById('message-area');
+        const errorMessage = document.getElementById('error-message');
 
         auth.onAuthStateChanged(user => {
             if (user) { window.location.href = '/index.html'; }
         });
 
-        // --- Inicio de sesión con Email/Contraseña ---
-        document.getElementById('login-form').addEventListener('submit', e => {
-            // ... (lógica sin cambios)
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = emailInput.value;
+            const password = document.getElementById('password').value;
+            
+            messageArea.classList.add('hidden');
+            errorMessage.classList.add('hidden');
+
+            if (!email || !password) {
+                showError('Por favor, ingresa correo y contraseña.');
+                return;
+            }
+
+            auth.signInWithEmailAndPassword(email, password)
+                .catch(error => {
+                    showError('El correo electrónico o la contraseña son incorrectos.');
+                    console.error("Login Error:", error);
+                });
+        });
+        
+        document.getElementById('forgot-password-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            const email = emailInput.value;
+
+            if (!email) {
+                showError('Por favor, ingresa tu correo para restablecer la contraseña.');
+                return;
+            }
+
+            auth.sendPasswordResetEmail(email)
+                .then(() => {
+                    showSuccess(`Se ha enviado un enlace a ${email} para restablecer tu contraseña.`);
+                    errorMessage.classList.add('hidden');
+                })
+                .catch((error) => {
+                    if (error.code === 'auth/user-not-found') {
+                        showError('No se encontró ninguna cuenta con este correo electrónico.');
+                    } else {
+                        showError('Error al enviar el correo de restablecimiento.');
+                    }
+                });
         });
 
-        // --- Restablecimiento de Contraseña ---
-        document.getElementById('forgot-password-link').addEventListener('click', e => {
-            // ... (lógica sin cambios)
-        });
-
-        // --- Inicio de sesión con Google ---
         document.getElementById('google-btn').addEventListener('click', () => {
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithPopup(provider).catch(handleSocialLoginError);
         });
 
-        // --- Inicio de sesión con Apple ---
         document.getElementById('apple-btn').addEventListener('click', () => {
             const provider = new firebase.auth.OAuthProvider('apple.com');
             auth.signInWithPopup(provider).catch(handleSocialLoginError);
         });
+
+        function handleUrlParams() {
+             const params = new URLSearchParams(window.location.search);
+             if (params.has('registration') && params.get('registration') === 'success') {
+                showSuccess("¡Cuenta creada! Ya puedes iniciar sesión.");
+             }
+        }
 
         function handleSocialLoginError(error) {
             if (error.code === 'auth/account-exists-with-different-credential') {
@@ -132,10 +207,19 @@
             }
         }
 
-        // --- Funciones de ayuda (showError, showSuccess, etc.) ---
-        // ... (sin cambios)
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+            messageArea.classList.add('hidden');
+        }
+        function showSuccess(message) {
+            messageArea.textContent = message;
+            messageArea.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+        }
 
         document.getElementById('register-redirect-btn').addEventListener('click', () => { window.location.href = '/register.html'; });
+
     </script>
 </body>
 </html>
