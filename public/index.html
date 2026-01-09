@@ -20,7 +20,7 @@
         .room-item-header { display: flex; justify-content: space-between; align-items: center; padding: 15px; cursor: pointer; }
         .room-details { display: none; padding: 15px; border-top: 1px solid var(--border-color); }
         .room-image-gallery { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; }
-        .room-image-gallery img { width: 120px; height: 80px; object-fit: cover; border-radius: 8px; }
+        .room-image-gallery img { width: 120px; height: 80px; object-fit: cover; border-radius: 8px; cursor: pointer; }
         .checkout-container { text-align: center; margin-top: 40px; }
         .hidden { display: none; }
         .switch { position: relative; display: inline-block; width: 60px; height: 34px; }
@@ -29,6 +29,10 @@
         .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--primary-accent); }
         input:checked + .slider:before { transform: translateX(26px); }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.9); }
+        .modal-content { margin: auto; display: block; width: 80%; max-width: 700px; padding-top: 50px; }
+        .close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; transition: 0.3s; }
+        .close:hover, .close:focus { color: #bbb; text-decoration: none; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -54,6 +58,11 @@
         </div>
     </div>
 
+    <div id="imageModal" class="modal">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="modalImage">
+    </div>
+
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -63,14 +72,6 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
         let currentUserProfile = null;
-
-        const placeholderImages = [
-            "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=800&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1582573648435-15e3d7497298?q=80&w=800&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1593359677879-a4bb92f82d7f?q=80&w=800&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1559599238-308793637427?q=80&w=800&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=800&auto=format&fit=crop"
-        ];
 
         auth.onAuthStateChanged(user => {
             if (user) {
@@ -92,11 +93,15 @@
         function setupClientEventListeners() {
             document.getElementById('available-rooms-list').addEventListener('click', (e) => {
                 const header = e.target.closest('.room-item-header');
-                if (!header) return;
-
-                const details = header.nextElementSibling;
-                if (details && details.classList.contains('room-details')) {
-                     details.style.display = details.style.display === 'block' ? 'none' : 'block';
+                if (header) {
+                    const details = header.nextElementSibling;
+                    if (details && details.classList.contains('room-details')) {
+                         details.style.display = details.style.display === 'block' ? 'none' : 'block';
+                    }
+                }
+                const img = e.target.closest('.room-image-gallery img');
+                if (img) {
+                    openModal(img.src);
                 }
             });
         }
@@ -137,7 +142,7 @@
                     }
                     list.innerHTML = available.map(doc => {
                         const room = { id: doc.id, ...doc.data() };
-                        const imageGalleryHTML = `<div class="room-image-gallery">${placeholderImages.map(img => `<img src="${img}" alt="Foto de la habitación">`).join('')}</div>`;
+                        const imageGalleryHTML = room.imagenes && room.imagenes.length > 0 ? `<div class="room-image-gallery">${room.imagenes.map(img => `<img src="${img}" alt="Foto de la habitación">`).join('')}</div>` : '';
                         return `<li class="room-item">
                                     <div class="room-item-header">
                                         <span>${room.numero} (${room.tipo}) - $${room.precio}/noche</span>
@@ -176,8 +181,10 @@
                 }
             }
         }
-
+        function openModal(imageUrl) { document.getElementById('modalImage').src = imageUrl; document.getElementById('imageModal').style.display = 'block'; }
+        function closeModal() { document.getElementById('imageModal').style.display = 'none'; }
         document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
+        window.onclick = function(event) { const modal = document.getElementById('imageModal'); if (event.target == modal) { closeModal(); } }
     </script>
 </body>
 </html>

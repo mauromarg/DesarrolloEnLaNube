@@ -24,9 +24,13 @@
         .room-item-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .room-details { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color); }
         .room-image-gallery { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; }
-        .room-image-gallery img { width: 120px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color); }
-        #user-select { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--border-color); background-color: #2a2a2a; color: var(--text-primary); }
+        .room-image-gallery img { width: 120px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; }
+        #user-select, #new-room-form input, #new-room-form select, #new-room-form textarea { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--border-color); background-color: #2a2a2a; color: var(--text-primary); box-sizing: border-box; }
         #user-details input, #user-details select { width: calc(100% - 22px); padding: 10px; margin-top: 5px; border-radius: 8px; border: 1px solid var(--border-color); background-color: #2a2a2a; color: var(--text-primary); }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.9); }
+        .modal-content { margin: auto; display: block; width: 80%; max-width: 700px; padding-top: 50px; }
+        .close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; transition: 0.3s; }
+        .close:hover, .close:focus { color: #bbb; text-decoration: none; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -42,8 +46,20 @@
             <h2>Clientes</h2>
             <select id="user-select"></select>
             <div id="user-details" style="margin-top: 20px;"></div>
+            <div id="new-room-section" style="margin-top: 30px;">
+                <h2>Nueva Habitación</h2>
+                <form id="new-room-form">
+                    <input type="number" id="room-number" placeholder="Número de Habitación" required>
+                    <select id="room-type" required><option value="single">Single</option><option value="double">Double</option><option value="suite">Suite</option></select>
+                    <input type="number" id="room-price" placeholder="Precio por noche" required>
+                    <textarea id="room-description" placeholder="Descripción"></textarea>
+                    <input type="text" id="room-images" placeholder="URLs de imágenes (separadas por comas)">
+                    <button type="submit" class="action-btn">Guardar Habitación</button>
+                </form>
+            </div>
         </div>
-        <div class="content-box"><h2>Habitaciones</h2>
+        <div class="content-box">
+            <h2>Habitaciones</h2>
             <div class="filter-buttons">
                 <button onclick="filterRooms('all')" class="active">Todas</button>
                 <button onclick="filterRooms('available')">Disponibles</button>
@@ -52,6 +68,11 @@
             </div>
             <ul id="room-list"><li>Cargando...</li></ul>
         </div>
+    </div>
+
+    <div id="imageModal" class="modal">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="modalImage">
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -67,14 +88,6 @@
         let allRooms = [], allUsers = [], allReservations = [];
         let currentFilter = 'all';
         let currentUser = null;
-
-        const placeholderImages = [
-            "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=800&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1582573648435-15e3d7497298?q=80&w=800&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1593359677879-a4bb92f82d7f?q=80&w=800&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1559599238-308793637427?q=80&w=800&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=800&auto=format&fit=crop"
-        ];
 
         auth.onAuthStateChanged(user => {
             if (user) {
@@ -93,12 +106,8 @@
         });
 
         function loadInitialData() {
-            db.collection('usuarios').orderBy('email').onSnapshot(snap => {
-                allUsers = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                setupUserDropdown();
-                renderRooms();
-            });
-            db.collection('habitaciones').onSnapshot(snap => { allRooms = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderRooms(); });
+            db.collection('usuarios').orderBy('email').onSnapshot(snap => { allUsers = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })); setupUserDropdown(); renderRooms(); });
+            db.collection('habitaciones').orderBy('numero').onSnapshot(snap => { allRooms = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderRooms(); });
             db.collection('reservas').onSnapshot(snap => { allReservations = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderRooms(); });
         }
 
@@ -106,24 +115,15 @@
             const userSelect = document.getElementById('user-select');
             const selectedVal = userSelect.value;
             userSelect.innerHTML = '<option value="">Seleccione un usuario</option>';
-            allUsers.forEach(user => {
-                const option = document.createElement('option');
-                option.value = user.id;
-                option.textContent = user.email;
-                userSelect.appendChild(option);
-            });
+            allUsers.forEach(user => { const option = document.createElement('option'); option.value = user.id; option.textContent = user.email; userSelect.appendChild(option); });
             userSelect.value = selectedVal;
-            userSelect.addEventListener('change', () => {
-                document.getElementById('user-details').innerHTML = '';
-                if (userSelect.value) displayUserDetails(userSelect.value);
-            });
+            userSelect.addEventListener('change', () => { document.getElementById('user-details').innerHTML = ''; if (userSelect.value) displayUserDetails(userSelect.value); });
         }
 
         function displayUserDetails(userId, isEditing = false) {
             const user = allUsers.find(u => u.id === userId);
             const userDetailsContainer = document.getElementById('user-details');
             if (!user) { userDetailsContainer.innerHTML = '<p>Usuario no encontrado.</p>'; return; }
-
             let detailsHTML = '<h3>Detalles del Usuario</h3>';
             if (isEditing) {
                 detailsHTML += `<div><p><strong>email:</strong> ${user.email}</p></div>`;
@@ -140,9 +140,7 @@
                 }
                 detailsHTML += `<button onclick="saveUser('${userId}')" class="action-btn">Guardar</button>`;
             } else {
-                for (const [key, value] of Object.entries(user)) {
-                    if (key !== 'id') detailsHTML += `<p><strong>${key}:</strong> ${value}</p>`;
-                }
+                for (const [key, value] of Object.entries(user)) { if (key !== 'id') detailsHTML += `<p><strong>${key}:</strong> ${value}</p>`; }
                 detailsHTML += `<button onclick="displayUserDetails('${userId}', true)" class="action-btn">Editar</button>`;
             }
             userDetailsContainer.innerHTML = detailsHTML;
@@ -153,7 +151,6 @@
             const originalUser = allUsers.find(u => u.id === userId);
             const updatedData = {};
             const cambios = {};
-
             for (const key of Object.keys(originalUser)) {
                 if (key !== 'id' && key !== 'email') {
                     const input = document.getElementById(`edit-${key}`);
@@ -163,26 +160,30 @@
                     }
                 }
             }
-
             if (Object.keys(updatedData).length > 0) {
                 try {
                     await userRef.update(updatedData);
-                    await db.collection('modificaciones_usuarios').add({
-                        usuarioId: userId,
-                        usuarioEmail: originalUser.email,
-                        adminId: currentUser.uid,
-                        adminEmail: currentUser.email,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                        cambios: cambios
-                    });
+                    await db.collection('modificaciones_usuarios').add({ usuarioId: userId, usuarioEmail: originalUser.email, adminId: currentUser.uid, adminEmail: currentUser.email, timestamp: firebase.firestore.FieldValue.serverTimestamp(), cambios: cambios });
                     alert('Usuario actualizado con éxito.');
-                } catch (error) {
-                    console.error("Error al actualizar el usuario: ", error);
-                    alert('Error al actualizar el usuario.');
-                }
+                } catch (error) { console.error("Error al actualizar el usuario: ", error); alert('Error al actualizar el usuario.'); }
             }
             displayUserDetails(userId);
         }
+
+        document.getElementById('new-room-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const numero = document.getElementById('room-number').value;
+            const tipo = document.getElementById('room-type').value;
+            const precio = parseFloat(document.getElementById('room-price').value);
+            const descripcion = document.getElementById('room-description').value;
+            const images = document.getElementById('room-images').value.split(',').map(url => url.trim()).filter(url => url);
+            if (!numero || !tipo || !precio) { alert('Por favor, complete todos los campos requeridos.'); return; }
+            try {
+                await db.collection('habitaciones').add({ numero, tipo, precio, descripcion, imagenes: images, disponible: true });
+                alert('Habitación guardada con éxito.');
+                e.target.reset();
+            } catch (error) { console.error('Error al guardar la habitación: ', error); alert('Error al guardar la habitación.'); }
+        });
 
         function renderRooms() {
             const getRoomStatus = (roomId) => {
@@ -196,16 +197,11 @@
             if (filteredRooms.length === 0) { roomList.innerHTML = '<li>No hay habitaciones que coincidan con el filtro.</li>'; return; }
             roomList.innerHTML = filteredRooms.map(room => {
                 const { status, user } = getRoomStatus(room.id);
-                const imageGalleryHTML = `<div class="room-image-gallery">${placeholderImages.map(img => `<img src="${img}" alt="Foto de la habitación">`).join('')}</div>`;
-                let details = '';
-                if (status === 'occupied' || status === 'reserved') {
-                    details = `<p><strong>${status === 'occupied' ? 'Ocupada' : 'Reservada'} por:</strong> ${user ? user.email : 'N/A'}</p>`;
-                }
+                const imageGalleryHTML = room.imagenes && room.imagenes.length > 0 ? `<div class="room-image-gallery">${room.imagenes.map(img => `<img src="${img}" alt="Foto de la habitación" onclick="openModal('${img}')">`).join('')}</div>` : '';
+                let details = `<p><strong>Precio:</strong> $${room.precio}/noche</p><p><strong>Descripción:</strong> ${room.descripcion || 'No disponible'}</p>`;
+                if (status === 'occupied' || status === 'reserved') { details += `<p><strong>${status === 'occupied' ? 'Ocupada' : 'Reservada'} por:</strong> ${user ? user.email : 'N/A'}</p>`; }
                 return `<li class="item">
-                    <div class="room-item-header" onclick="toggleDetails(this)">
-                        <strong>Habitación ${room.numero} (${room.tipo})</strong>
-                        <span>${status.charAt(0).toUpperCase() + status.slice(1)}</span>
-                    </div>
+                    <div class="room-item-header" onclick="toggleDetails(this)"><strong>Habitación ${room.numero} (${room.tipo})</strong><span>${status.charAt(0).toUpperCase() + status.slice(1)}</span></div>
                     <div class="room-details">${imageGalleryHTML}${details}</div>
                 </li>`;
             }).join('');
@@ -218,12 +214,11 @@
             renderRooms();
         }
 
-        function toggleDetails(header) {
-            const details = header.nextElementSibling;
-            if (details) details.style.display = details.style.display === 'block' ? 'none' : 'block';
-        }
-
+        function toggleDetails(header) { const details = header.nextElementSibling; if (details) details.style.display = details.style.display === 'block' ? 'none' : 'block'; }
+        function openModal(imageUrl) { document.getElementById('modalImage').src = imageUrl; document.getElementById('imageModal').style.display = 'block'; }
+        function closeModal() { document.getElementById('imageModal').style.display = 'none'; }
         document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
+        window.onclick = function(event) { const modal = document.getElementById('imageModal'); if (event.target == modal) { closeModal(); } }
     </script>
 </body>
 </html>
